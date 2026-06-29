@@ -1,348 +1,444 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Registration Successful — Ma Foi Careers</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="css/base.css" />
-    <link rel="stylesheet" href="css/components.css" />
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registration Successful — Ma Foi Careers</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/theme.css"/>
+  <style>
+    /* ── Page layout ─────────────────────────────────────────── */
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+    }
 
-        body {
-            min-height: 100vh;
-            background: #f0f4ff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Inter', 'Segoe UI', sans-serif;
-            padding: 24px 16px;
-            overflow-x: hidden;
-        }
+    .page-body {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px 60px;
+      position: relative;
+      overflow: hidden;
+    }
 
-        /* ── Confetti canvas ── */
-        #confetti-canvas {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 0;
-        }
+    /* ── Confetti ────────────────────────────────────────────── */
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-        /* ── Main card ── */
-        .success-card {
-            position: relative;
-            z-index: 1;
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(14, 75, 255, 0.15);
-            padding: 48px 40px 40px;
-            max-width: 460px;
-            width: 100%;
-            text-align: center;
-            animation: cardSlideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-        }
+    /* ── Success card ────────────────────────────────────────── */
+    .success-card {
+      position: relative;
+      z-index: 1;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 8px 40px rgba(30, 58, 95, 0.12);
+      padding: 48px 40px 40px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(28px) scale(0.97);
+      transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    }
 
-        @keyframes cardSlideUp {
-            from { opacity: 0; transform: translateY(40px) scale(0.95); }
-            to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
+    .success-card.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
 
-        /* ── Animated tick ── */
-        .tick-wrap {
-            width: 88px;
-            height: 88px;
-            margin: 0 auto 28px;
-            position: relative;
-        }
+    /* ── Animated tick icon ──────────────────────────────────── */
+    .tick-wrap {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      position: relative;
+    }
 
-        .tick-circle-bg {
-            width: 88px;
-            height: 88px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #0E4BFF, #2FE6A6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: popIn 0.4s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-        }
+    .tick-bg {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1e3a5f, #2563eb);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: scale(0.4);
+      transition: opacity 0.35s 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  transform 0.35s 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
 
-        @keyframes popIn {
-            from { transform: scale(0); opacity: 0; }
-            to   { transform: scale(1); opacity: 1; }
-        }
+    .success-card.visible .tick-bg {
+      opacity: 1;
+      transform: scale(1);
+    }
 
-        .tick-svg { width: 44px; height: 44px; overflow: visible; }
+    .tick-svg {
+      width: 40px;
+      height: 40px;
+      overflow: visible;
+    }
 
-        .tick-path {
-            stroke: white;
-            stroke-width: 4;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            fill: none;
-            stroke-dasharray: 60;
-            stroke-dashoffset: 60;
-            animation: drawTick 0.4s 0.7s ease forwards;
-        }
+    .tick-path {
+      stroke: white;
+      stroke-width: 3.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      stroke-dasharray: 55;
+      stroke-dashoffset: 55;
+      transition: stroke-dashoffset 0.38s 0.52s ease;
+    }
 
-        @keyframes drawTick { to { stroke-dashoffset: 0; } }
+    .success-card.visible .tick-path {
+      stroke-dashoffset: 0;
+    }
 
-        .tick-pulse {
-            position: absolute;
-            inset: -8px;
-            border-radius: 50%;
-            border: 3px solid rgba(14, 75, 255, 0.3);
-            animation: pulseRing 1s 1s ease-out both;
-        }
+    /* Ripple ring */
+    .tick-ring {
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 2.5px solid rgba(37, 99, 235, 0.35);
+      opacity: 0;
+      transform: scale(0.85);
+    }
 
-        @keyframes pulseRing {
-            from { transform: scale(0.8); opacity: 1; }
-            to   { transform: scale(1.4); opacity: 0; }
-        }
+    .success-card.visible .tick-ring {
+      animation: ripple 0.9s 0.9s ease-out forwards;
+    }
 
-        /* ── Text ── */
-        .success-title {
-            font-size: 26px;
-            font-weight: 800;
-            color: #0d1117;
-            letter-spacing: -0.5px;
-            margin-bottom: 8px;
-            animation: fadeUp 0.4s 0.8s ease both;
-        }
+    @keyframes ripple {
+      0%   { opacity: 1; transform: scale(0.85); }
+      100% { opacity: 0; transform: scale(1.45); }
+    }
 
-        .success-sub {
-            font-size: 15px;
-            color: #6b7280;
-            line-height: 1.5;
-            animation: fadeUp 0.4s 0.9s ease both;
-        }
+    /* ── Text elements — staggered fade-up ───────────────────── */
+    .s-title,
+    .s-sub,
+    .s-divider,
+    .id-section,
+    .next-box,
+    .action-group {
+      opacity: 0;
+      transform: translateY(14px);
+    }
 
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(12px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
+    .success-card.visible .s-title     { animation: fadeUp 0.38s 0.70s ease forwards; }
+    .success-card.visible .s-sub       { animation: fadeUp 0.38s 0.82s ease forwards; }
+    .success-card.visible .s-divider   { animation: fadeUp 0.38s 0.90s ease forwards; }
+    .success-card.visible .id-section  { animation: fadeUp 0.38s 0.98s ease forwards; }
+    .success-card.visible .next-box    { animation: fadeUp 0.38s 1.08s ease forwards; }
+    .success-card.visible .action-group{ animation: fadeUp 0.38s 1.18s ease forwards; }
 
-        .divider {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
-            margin: 28px 0;
-            animation: fadeUp 0.4s 1s ease both;
-        }
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
 
-        /* ── ID badge ── */
-        .id-section { animation: fadeUp 0.4s 1s ease both; }
+    /* ── Typography ──────────────────────────────────────────── */
+    .s-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.4px;
+      margin-bottom: 8px;
+    }
 
-        .id-label {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: #9ca3af;
-            margin-bottom: 10px;
-        }
+    .s-sub {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
 
-        .id-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            background: linear-gradient(135deg, #0E4BFF 0%, #2563eb 100%);
-            color: white;
-            font-size: 30px;
-            font-weight: 900;
-            letter-spacing: 0.12em;
-            padding: 18px 36px;
-            border-radius: 16px;
-            cursor: pointer;
-            position: relative;
-            transition: transform 0.15s, box-shadow 0.15s;
-            box-shadow: 0 8px 24px rgba(14, 75, 255, 0.35);
-            user-select: none;
-            width: 100%;
-            border: none;
-        }
+    .s-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 24px 0;
+    }
 
-        .id-badge:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(14, 75, 255, 0.4); }
-        .id-badge:active { transform: translateY(0); }
-        .id-badge .copy-icon { opacity: 0.7; flex-shrink: 0; }
+    /* ── Ma Foi ID badge ─────────────────────────────────────── */
+    .id-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
 
-        .copy-tooltip {
-            position: absolute;
-            top: -38px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1f2937;
-            color: white;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 6px 14px;
-            border-radius: 8px;
-            white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s;
-        }
+    .id-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+      color: white;
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      padding: 18px 24px;
+      border-radius: 14px;
+      border: none;
+      cursor: pointer;
+      position: relative;
+      box-shadow: 0 4px 20px rgba(37,99,235,0.28);
+      transition: transform 0.15s, box-shadow 0.15s;
+      font-family: inherit;
+      user-select: none;
+    }
 
-        .copy-tooltip.show { opacity: 1; }
-        .copy-tooltip::after {
-            content: '';
-            position: absolute;
-            top: 100%; left: 50%;
-            transform: translateX(-50%);
-            border: 5px solid transparent;
-            border-top-color: #1f2937;
-        }
+    .id-badge:hover  { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(37,99,235,0.36); }
+    .id-badge:active { transform: translateY(0); }
 
-        .id-hint { font-size: 12px; color: #9ca3af; margin-top: 10px; }
+    .copy-chip {
+      background: rgba(255,255,255,0.18);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
 
-        /* ── What's next ── */
-        .next-box {
-            background: #f8faff;
-            border: 1px solid #e0e7ff;
-            border-radius: 14px;
-            padding: 18px 20px;
-            text-align: left;
-            margin-top: 24px;
-            animation: fadeUp 0.4s 1.1s ease both;
-        }
+    .copy-tooltip {
+      position: absolute;
+      top: -36px;
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      background: #1e293b;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 8px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s, transform 0.18s;
+    }
 
-        .next-box h3 {
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #6b7280;
-            margin-bottom: 12px;
-        }
+    .copy-tooltip.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
 
-        .next-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            font-size: 13.5px;
-            color: #374151;
-            line-height: 1.5;
-            margin-bottom: 8px;
-        }
+    .copy-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%; left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: #1e293b;
+    }
 
-        .next-item:last-child { margin-bottom: 0; }
+    .id-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
 
-        .next-dot {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #0E4BFF, #2FE6A6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            margin-top: 1px;
-        }
+    /* ── What's next box ─────────────────────────────────────── */
+    .next-box {
+      background: #f8faff;
+      border: 1px solid #e0e7ff;
+      border-radius: 12px;
+      padding: 16px 18px;
+      text-align: left;
+      margin-top: 20px;
+    }
 
-        .next-dot svg { width: 10px; height: 10px; }
+    .next-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
 
-        /* ── 3 Action buttons ── */
-        .actions {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 28px;
-            animation: fadeUp 0.4s 1.2s ease both;
-        }
+    .next-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      margin-bottom: 8px;
+    }
 
-        /* Primary — Download PDF */
-        .btn-pdf {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            background: linear-gradient(135deg, #0E4BFF, #2563eb);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 15px 20px;
-            font-size: 15px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.15s;
-            box-shadow: 0 4px 14px rgba(14, 75, 255, 0.3);
-            width: 100%;
-            font-family: inherit;
-        }
+    .next-item:last-child { margin-bottom: 0; }
 
-        .btn-pdf:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(14, 75, 255, 0.4); }
-        .btn-pdf:active { transform: translateY(0); }
+    .next-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #2563eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
 
-        .btn-pdf.loading {
-            opacity: 0.8;
-            cursor: wait;
-        }
+    /* ── Action buttons ──────────────────────────────────────── */
+    .action-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 24px;
+    }
 
-        /* Secondary row */
-        .actions-row {
-            display: flex;
-            gap: 10px;
-        }
+    .btn-download {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 13px 20px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(37,99,235,0.25);
+      transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+    }
 
-        .btn-outline {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 7px;
-            background: white;
-            color: #374151;
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 13px 16px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: border-color 0.15s, background 0.15s, color 0.15s;
-            text-decoration: none;
-            font-family: inherit;
-        }
+    .btn-download:hover  { background: var(--accent-hover); box-shadow: 0 4px 16px rgba(37,99,235,0.35); transform: translateY(-1px); }
+    .btn-download:active { transform: translateY(0); }
+    .btn-download:disabled { opacity: 0.7; cursor: wait; }
 
-        .btn-outline:hover {
-            border-color: #0E4BFF;
-            color: #0E4BFF;
-            background: #f0f4ff;
-        }
+    .btn-row-2 {
+      display: flex;
+      gap: 10px;
+    }
 
-        /* ── Error state ── */
-        .error-state { text-align: center; padding: 48px 40px; }
-        .error-icon { font-size: 48px; margin-bottom: 16px; }
-        .error-title { font-size: 20px; font-weight: 700; color: #dc2626; margin-bottom: 8px; }
-        .error-msg { font-size: 14px; color: #6b7280; margin-bottom: 24px; line-height: 1.5; }
+    .btn-sec {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 12px 16px;
+      font-size: 13.5px;
+      font-weight: 600;
+      font-family: inherit;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
 
-        .btn-back {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: #0E4BFF;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 13px 24px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            text-decoration: none;
-            font-family: inherit;
-        }
+    .btn-sec:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: #f0f4ff;
+    }
 
-        @media (max-width: 480px) {
-            .success-card { padding: 36px 20px 28px; }
-            .id-badge { font-size: 22px; padding: 16px 20px; }
-            .actions-row { flex-direction: column; }
-        }
-    </style>
+    /* ── Spinner for PDF button ──────────────────────────────── */
+    .spin {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spinAnim 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spinAnim { to { transform: rotate(360deg); } }
+
+    /* ── Error state ─────────────────────────────────────────── */
+    .err-state {
+      text-align: center;
+      padding: 20px;
+    }
+
+    .err-icon {
+      width: 64px; height: 64px;
+      background: #fef2f2;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+      color: var(--danger);
+    }
+
+    .err-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .err-msg   { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px; }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (max-width: 480px) {
+      .page-body     { padding: 20px 16px 40px; align-items: flex-start; padding-top: 32px; }
+      .success-card  { padding: 28px 18px 24px; border-radius: 16px; }
+      .tick-wrap     { width: 68px; height: 68px; margin-bottom: 18px; }
+      .tick-bg       { width: 68px; height: 68px; }
+      .tick-svg      { width: 34px; height: 34px; }
+      .s-title       { font-size: 20px; }
+      .s-sub         { font-size: 13px; }
+      .id-badge      { font-size: 20px; padding: 14px 14px; border-radius: 12px; }
+      .copy-chip     { font-size: 10px; padding: 3px 6px; }
+      .id-hint       { font-size: 11px; }
+      .next-box      { padding: 14px 14px; }
+      .next-item     { font-size: 12.5px; gap: 8px; }
+      .action-group  { margin-top: 18px; gap: 8px; }
+      .btn-download  { padding: 12px 16px; font-size: 13.5px; }
+      .btn-row-2     { flex-direction: column; gap: 8px; }
+      .btn-sec       { padding: 11px 14px; font-size: 13px; }
+      .err-state     { padding: 16px; }
+    }
+
+    @media (min-width: 481px) and (max-width: 640px) {
+      .success-card  { padding: 36px 28px 32px; max-width: 100%; }
+    }
+  </style>
 </head>
 <body>
 
+<!-- Header — matches portal exactly -->
+<header class="portal-header">
+  <a href="index.html" class="portal-logo">
+    <div class="portal-logo__icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+    </div>
+    <div>
+      <span class="portal-logo__name">Ma Foi</span>
+      <span class="portal-logo__sub">Student Registration</span>
+    </div>
+  </a>
+  <div class="portal-header__badge" id="header-badge" style="display:none"></div>
+</header>
+
+<!-- Confetti -->
 <canvas id="confetti-canvas"></canvas>
-<div class="success-card" id="card"></div>
+
+<!-- Page body -->
+<div class="page-body">
+  <div class="success-card" id="card"></div>
+</div>
 
 <script type="module">
 'use strict';
@@ -350,528 +446,307 @@
 import { Confetti } from './js/confetti.js';
 import { supabase } from './js/supabase.js';
 
-// ── Read data: URL params → sessionStorage fallback ──────────
+// ── Read registration data ─────────────────────────────────────
 const params  = new URLSearchParams(window.location.search);
 let maFoiId  = params.get('id')?.trim().toUpperCase() || null;
 let fullName = params.get('name')?.trim() || null;
 let regType  = params.get('type') || 'new';
 
 if (!maFoiId) {
-    try {
-        const stored = sessionStorage.getItem('mafoi_reg');
-        if (stored) {
-            const obj = JSON.parse(stored);
-            maFoiId  = obj.maFoiId  || null;
-            fullName = obj.fullName || null;
-            regType  = obj.type    || 'new';
-        }
-    } catch (_) {}
+  try {
+    const s = JSON.parse(sessionStorage.getItem('mafoi_reg') || 'null');
+    if (s) { maFoiId = s.maFoiId; fullName = s.fullName; regType = s.type || 'new'; }
+  } catch(_) {}
 }
 
 const card = document.getElementById('card');
 
-// ── ERROR STATE ───────────────────────────────────────────────
+// ════════════════════════════════════════════════════
+// ERROR STATE
+// ════════════════════════════════════════════════════
 if (!maFoiId) {
-    card.innerHTML = `
-        <div class="error-state">
-            <div class="error-icon">⚠️</div>
-            <div class="error-title">Registration ID Not Found</div>
-            <div class="error-msg">
-                Your registration may still have been saved.<br>
-                Please check your email or contact Ma Foi support.
-            </div>
-            <a href="index.html" class="btn-back">← Back to Registration</a>
-        </div>`;
-    try { sessionStorage.removeItem('mafoi_reg'); } catch(_) {}
+  card.innerHTML = `
+    <div class="err-state">
+      <div class="err-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <div class="err-title">Registration ID Not Found</div>
+      <div class="err-msg">
+        Your registration may still have been saved.<br>
+        Please check your Supabase table or contact Ma Foi support.
+      </div>
+      <a href="index.html" class="btn-sec" style="display:inline-flex;max-width:220px;margin:0 auto">
+        ← Back to Home
+      </a>
+    </div>`;
+  triggerCard();
+  try { sessionStorage.removeItem('mafoi_reg'); } catch(_) {}
 
-// ── SUCCESS STATE ─────────────────────────────────────────────
+// ════════════════════════════════════════════════════
+// SUCCESS STATE
+// ════════════════════════════════════════════════════
 } else {
-    const heading = regType === 'update' ? 'Registration Updated!' : 'Successfully Registered!';
-    const subtext = regType === 'update'
-        ? 'Your Ma Foi registration has been updated successfully.'
-        : 'Welcome to Ma Foi Careers. Your registration is confirmed.';
+  const isUpdate = regType === 'update';
+  const heading  = isUpdate ? 'Registration Updated!' : 'Successfully Registered!';
+  const subtext  = isUpdate
+    ? 'Your Ma Foi registration has been updated. All changes are saved.'
+    : 'Welcome to Ma Foi Careers. Your registration is confirmed.';
 
-    card.innerHTML = `
-        <div class="tick-wrap">
-            <div class="tick-circle-bg">
-                <svg class="tick-svg" viewBox="0 0 44 44">
-                    <path class="tick-path" d="M10 22 L19 31 L34 14"/>
-                </svg>
-            </div>
-            <div class="tick-pulse"></div>
+  // Update header badge
+  const hbadge = document.getElementById('header-badge');
+  hbadge.textContent = maFoiId;
+  hbadge.style.display = '';
+
+  card.innerHTML = `
+    <!-- Tick icon -->
+    <div class="tick-wrap">
+      <div class="tick-bg">
+        <svg class="tick-svg" viewBox="0 0 40 40">
+          <path class="tick-path" d="M8 20 L17 29 L32 13"/>
+        </svg>
+      </div>
+      <div class="tick-ring"></div>
+    </div>
+
+    <!-- Heading -->
+    <h1 class="s-title">${heading}</h1>
+    <p class="s-sub">${subtext}</p>
+
+    <div class="s-divider"></div>
+
+    <!-- ID badge -->
+    <div class="id-section">
+      <p class="id-label">Your Ma Foi ID</p>
+      <button class="id-badge" id="id-badge" type="button" aria-label="Copy Ma Foi ID ${maFoiId}">
+        <span id="id-text">${maFoiId}</span>
+        <span class="copy-chip">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copy
+        </span>
+        <span class="copy-tooltip" id="copy-tooltip">✓ Copied!</span>
+      </button>
+      <p class="id-hint">Tap to copy · Keep this ID to edit your registration later</p>
+    </div>
+
+    <!-- What's next -->
+    <div class="next-box">
+      <div class="next-title">What happens next?</div>
+      <div class="next-item">
+        <div class="next-icon">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
-
-        <h1 class="success-title">${heading}</h1>
-        <p class="success-sub">${subtext}</p>
-
-        <div class="divider"></div>
-
-        <div class="id-section">
-            <p class="id-label">Your Ma Foi ID</p>
-            <button class="id-badge" id="id-badge" type="button" aria-label="Copy Ma Foi ID ${maFoiId}">
-                <span>${maFoiId}</span>
-                <svg class="copy-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-                </svg>
-                <span class="copy-tooltip" id="copy-tooltip">Copied!</span>
-            </button>
-            <p class="id-hint">Tap the ID to copy it · Keep it safe to edit your registration later</p>
+        <span>A Ma Foi representative will contact you within 2–3 working days.</span>
+      </div>
+      <div class="next-item">
+        <div class="next-icon">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
-
-        <div class="next-box">
-            <h3>What happens next?</h3>
-            <div class="next-item">
-                <div class="next-dot"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
-                <span>A Ma Foi representative will contact you within 2–3 working days.</span>
-            </div>
-            <div class="next-item">
-                <div class="next-dot"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
-                <span>Save your Ma Foi ID <strong>${maFoiId}</strong> for all future correspondence.</span>
-            </div>
-            <div class="next-item">
-                <div class="next-dot"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
-                <span>You can edit your registration anytime using your ID and registered phone number.</span>
-            </div>
+        <span>Save your Ma Foi ID <strong>${maFoiId}</strong> for all future correspondence.</span>
+      </div>
+      <div class="next-item">
+        <div class="next-icon">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
+        <span>You can edit your registration anytime using your ID and registered phone number.</span>
+      </div>
+    </div>
 
-        <div class="actions">
-            <!-- Primary: Download PDF -->
-            <button class="btn-pdf" id="btn-pdf" type="button">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                Download Registration PDF
-            </button>
+    <!-- Actions -->
+    <div class="action-group">
+      <button class="btn-download" id="btn-pdf" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download Registration PDF
+      </button>
+      <div class="btn-row-2">
+        <a href="edit.html" class="btn-sec">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit Registration
+        </a>
+        <a href="index.html" class="btn-sec">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Return to Home
+        </a>
+      </div>
+    </div>
+  `;
 
-            <!-- Secondary row -->
-            <div class="actions-row">
-                <a href="edit.html" class="btn-outline">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                    </svg>
-                    Edit Registration
-                </a>
-                <a href="index.html" class="btn-outline">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                        <polyline points="9 22 9 12 15 12 15 22"/>
-                    </svg>
-                    Return to Home
-                </a>
-            </div>
-        </div>
-    `;
+  // ── Copy ID ─────────────────────────────────────────────────
+  const badge   = document.getElementById('id-badge');
+  const tooltip = document.getElementById('copy-tooltip');
 
-    // ── Copy Ma Foi ID ────────────────────────────────────────
-    const badge   = document.getElementById('id-badge');
-    const tooltip = document.getElementById('copy-tooltip');
-
-    async function copyId() {
-        try { await navigator.clipboard.writeText(maFoiId); }
-        catch {
-            const t = document.createElement('textarea');
-            t.value = maFoiId;
-            t.style.cssText = 'position:fixed;opacity:0';
-            document.body.appendChild(t);
-            t.select();
-            document.execCommand('copy');
-            t.remove();
-        }
-        tooltip.classList.add('show');
-        setTimeout(() => tooltip.classList.remove('show'), 2000);
+  async function copyId() {
+    try { await navigator.clipboard.writeText(maFoiId); }
+    catch {
+      const t = Object.assign(document.createElement('textarea'), { value: maFoiId });
+      t.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove();
     }
+    tooltip.classList.add('show');
+    setTimeout(() => tooltip.classList.remove('show'), 2000);
+  }
 
-    badge.addEventListener('click', copyId);
-    badge.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copyId(); }
-    });
+  badge.addEventListener('click', copyId);
+  badge.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); copyId(); }});
 
-    // ── Download PDF ──────────────────────────────────────────
-    document.getElementById('btn-pdf').addEventListener('click', async () => {
-        const btn = document.getElementById('btn-pdf');
-        btn.classList.add('loading');
-        btn.innerHTML = `
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 0.8s linear infinite">
-                <path d="M21 12a9 9 0 11-6.219-8.56"/>
-            </svg>
-            Generating PDF…`;
-
-        try {
-            // Fetch full student record from Supabase
-            let student = null;
-            let documents = [];
-
-            try {
-                const { data: s } = await supabase
-                    .from('students').select('*').eq('ma_foi_id', maFoiId).single();
-                student = s;
-
-                const { data: d } = await supabase
-                    .from('documents').select('*').eq('ma_foi_id', maFoiId);
-                documents = d || [];
-            } catch (fetchErr) {
-                console.warn('Could not fetch full record, using partial data:', fetchErr);
-            }
-
-            generateAndDownloadPDF(maFoiId, fullName, student, documents);
-
-        } catch (err) {
-            console.error('PDF generation error:', err);
-            alert('Could not generate PDF. Please try again.');
-        } finally {
-            btn.classList.remove('loading');
-            btn.innerHTML = `
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                Download Registration PDF`;
-        }
-    });
-
-    // ── Confetti ──────────────────────────────────────────────
+  // ── Download PDF ─────────────────────────────────────────────
+  document.getElementById('btn-pdf').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-pdf');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span> Generating PDF…';
     try {
-        const canvas   = document.getElementById('confetti-canvas');
-        const confetti = new Confetti(canvas);
-        confetti.launch();
-        setTimeout(() => confetti.destroy(), 5000);
-    } catch (e) {
-        console.warn('Confetti failed:', e);
+      let student = null, documents = [];
+      try {
+        const { data: s } = await supabase.from('students').select('*').eq('ma_foi_id', maFoiId).single();
+        student = s;
+        const { data: d } = await supabase.from('documents').select('*').eq('ma_foi_id', maFoiId);
+        documents = d || [];
+      } catch(e) { console.warn('Partial data only:', e); }
+      generatePDF(maFoiId, fullName, student, documents);
+    } catch(e) {
+      console.error(e);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download Registration PDF`;
     }
+  });
 
-    try { sessionStorage.removeItem('mafoi_reg'); } catch(_) {}
+  // ── Confetti (only on new registration) ──────────────────────
+  if (!isUpdate) {
+    try {
+      const confetti = new Confetti(document.getElementById('confetti-canvas'));
+      confetti.launch();
+      setTimeout(() => confetti.destroy(), 5000);
+    } catch(e) { console.warn('Confetti:', e); }
+  }
+
+  try { sessionStorage.removeItem('mafoi_reg'); } catch(_) {}
 }
 
-// ─────────────────────────────────────────────────────────────
-// PDF GENERATION
-// Opens a print-ready window and triggers browser Save as PDF
-// ─────────────────────────────────────────────────────────────
+// ── Trigger card entrance animation ───────────────────────────
+function triggerCard() {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    document.getElementById('card').classList.add('visible');
+  }));
+}
 
-function generateAndDownloadPDF(maFoiId, fullName, student, documents) {
-    const today = new Date().toLocaleDateString('en-IN', {
-        day: '2-digit', month: 'long', year: 'numeric'
-    });
+triggerCard();
 
-    const row = (label, value) =>
-        value ? `<tr><td class="lbl">${label}</td><td class="val">${esc(String(value))}</td></tr>` : '';
+// ════════════════════════════════════════════════════
+// PDF GENERATOR
+// ════════════════════════════════════════════════════
+function generatePDF(maFoiId, fullName, student, documents) {
+  const today = new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'long', year:'numeric' });
+  const fmt   = iso => { if(!iso) return '—'; const d=new Date(iso); return isNaN(d)?iso:d.toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'}); };
+  const mask  = n => (n && n.length===12) ? 'XXXX XXXX '+n.slice(8) : (n||'—');
+  const row   = (k,v) => v!=null&&v!=='' ? `<tr><td class="lbl">${k}</td><td class="val">${esc(String(v))}</td></tr>` : '';
+  const fAadh = student?.father_aadhaar_masked?.replace(':','XXX XXX') || null;
 
-    const fatherAadhaar = student?.father_aadhaar_masked
-        ? student.father_aadhaar_masked.replace(':', 'XXX XXX')
-        : null;
+  const DOC_TYPES = [
+    {key:'10th_marksheet',label:'10th Marksheet'},
+    {key:'12th_marksheet',label:'12th Marksheet'},
+    {key:'degree_certificate',label:'6th Sem Marksheet / Degree Certificate'},
+    {key:'aadhaar_card',label:'Aadhaar Card'},
+    {key:'ration_income',label:'Ration Card / Income Certificate'},
+    {key:'signature',label:'Signature'},
+    {key:'passport_photo',label:'Passport Size Photo'},
+  ];
 
-    const maskAadhaar = (n) =>
-        (n && n.length === 12) ? 'XXXX XXXX ' + n.slice(8) : (n || '—');
+  const docRows = DOC_TYPES.map(dt => {
+    const found = documents.find(d => d.doc_type === dt.key);
+    return `<tr><td class="lbl">${dt.label}</td><td class="val ${found?'ok':'miss'}">${found?'✓ Uploaded':'— Not uploaded'}</td></tr>`;
+  }).join('');
 
-    const formatDate = (iso) => {
-        if (!iso) return '—';
-        const d = new Date(iso);
-        return isNaN(d) ? iso : d.toLocaleDateString('en-IN', { day:'2-digit', month:'2-digit', year:'numeric' });
-    };
-
-    const DOC_TYPES = [
-        { key: '10th_marksheet',     label: '10th Marksheet' },
-        { key: '12th_marksheet',     label: '12th Marksheet' },
-        { key: 'degree_certificate', label: '6th Sem Marksheet / Degree Certificate' },
-        { key: 'aadhaar_card',       label: 'Aadhaar Card' },
-        { key: 'ration_income',      label: 'Ration Card / Income Certificate' },
-        { key: 'signature',          label: 'Signature' },
-        { key: 'passport_photo',     label: 'Passport Size Photo' },
-    ];
-
-    const docRows = DOC_TYPES.map(dt => {
-        const found = documents.find(d => d.doc_type === dt.key);
-        return `<tr>
-            <td class="lbl">${dt.label}</td>
-            <td class="val ${found ? 'ok' : 'miss'}">${found ? '✓ Uploaded' : '— Not uploaded'}</td>
-        </tr>`;
-    }).join('');
-
-    const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<title>Ma Foi Registration — ${maFoiId}</title>
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
+<title>Ma Foi Registration — ${esc(maFoiId)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-    font-size: 13px;
-    color: #111827;
-    background: white;
-    padding: 32px 36px;
-    max-width: 780px;
-    margin: 0 auto;
-  }
-
-  /* Header */
-  .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-bottom: 18px;
-    border-bottom: 3px solid #0E4BFF;
-    margin-bottom: 24px;
-  }
-
-  .logo {
-    font-size: 22px;
-    font-weight: 800;
-    color: #0E4BFF;
-    letter-spacing: -0.5px;
-  }
-
-  .logo span { color: #2FE6A6; }
-
-  .meta {
-    text-align: right;
-    font-size: 11.5px;
-    color: #6b7280;
-    line-height: 1.6;
-  }
-
-  .meta strong {
-    display: block;
-    font-size: 13px;
-    color: #111827;
-    font-weight: 700;
-  }
-
-  /* Title */
-  .doc-title {
-    text-align: center;
-    font-size: 17px;
-    font-weight: 800;
-    color: #0E4BFF;
-    letter-spacing: 0.02em;
-    margin-bottom: 20px;
-  }
-
-  /* ID badge */
-  .id-block {
-    background: linear-gradient(135deg, #0E4BFF 0%, #2563eb 100%);
-    color: white;
-    border-radius: 12px;
-    padding: 16px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 24px;
-  }
-
-  .id-block .id-label { font-size: 11px; font-weight: 600; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.1em; }
-  .id-block .id-val   { font-size: 28px; font-weight: 900; letter-spacing: 0.1em; margin-top: 2px; }
-  .id-block .id-right { text-align: right; font-size: 12px; opacity: 0.85; line-height: 1.6; }
-
-  /* Sections */
-  .section { margin-bottom: 20px; page-break-inside: avoid; }
-
-  .section-title {
-    font-size: 10.5px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: #0E4BFF;
-    background: #f0f4ff;
-    padding: 6px 12px;
-    border-left: 3px solid #0E4BFF;
-    border-radius: 0 4px 4px 0;
-    margin-bottom: 8px;
-  }
-
-  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-
-  .lbl {
-    width: 42%;
-    padding: 7px 12px;
-    color: #6b7280;
-    font-weight: 600;
-    background: #f9fafb;
-    border-bottom: 1px solid #f3f4f6;
-  }
-
-  .val {
-    padding: 7px 12px;
-    color: #111827;
-    border-bottom: 1px solid #f3f4f6;
-  }
-
-  .ok   { color: #16a34a; font-weight: 700; }
-  .miss { color: #9ca3af; }
-
-  /* Signature block */
-  .sig-block {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 24px;
-    margin-top: 36px;
-    page-break-inside: avoid;
-  }
-
-  .sig-line {
-    border-top: 1px solid #374151;
-    padding-top: 6px;
-    font-size: 11px;
-    color: #6b7280;
-  }
-
-  /* Footer */
-  .footer {
-    margin-top: 28px;
-    padding-top: 14px;
-    border-top: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: space-between;
-    font-size: 10.5px;
-    color: #9ca3af;
-  }
-
-  /* Print */
-  @media print {
-    body { padding: 20px 24px; }
-    .no-print { display: none !important; }
-    a { text-decoration: none; color: inherit; }
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-</style>
-</head>
-<body>
-
-<!-- Print button (hidden in print) -->
-<div class="no-print" style="text-align:right;margin-bottom:20px">
-    <button onclick="window.print()"
-        style="background:#0E4BFF;color:white;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
-        🖨️ Save as PDF / Print
-    </button>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',Arial,sans-serif;font-size:13px;color:#111827;background:#fff;padding:32px 36px;max-width:780px;margin:0 auto}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;border-bottom:3px solid #1e3a5f;margin-bottom:22px}
+.logo{font-size:20px;font-weight:800;color:#1e3a5f;letter-spacing:-.5px}.logo span{color:#2563eb}
+.meta{text-align:right;font-size:11.5px;color:#6b7280;line-height:1.6}.meta strong{display:block;font-size:13px;color:#111827;font-weight:700}
+.doc-title{text-align:center;font-size:16px;font-weight:800;color:#1e3a5f;letter-spacing:.02em;margin-bottom:18px}
+.id-block{background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff;border-radius:10px;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.id-lbl{font-size:10px;font-weight:600;opacity:.8;text-transform:uppercase;letter-spacing:.1em}
+.id-val{font-size:26px;font-weight:900;letter-spacing:.1em;margin-top:2px}
+.id-right{text-align:right;font-size:12px;opacity:.85;line-height:1.6}
+.section{margin-bottom:18px;page-break-inside:avoid}
+.sec-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#1e3a5f;background:#eff6ff;padding:5px 10px;border-left:3px solid #2563eb;border-radius:0 4px 4px 0;margin-bottom:7px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+.lbl{width:42%;padding:7px 10px;color:#6b7280;font-weight:600;background:#f9fafb;border-bottom:1px solid #f3f4f6}
+.val{padding:7px 10px;color:#111827;border-bottom:1px solid #f3f4f6}
+.ok{color:#16a34a;font-weight:700}.miss{color:#9ca3af}
+.sigs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;margin-top:36px;page-break-inside:avoid}
+.sig{border-top:1px solid #374151;padding-top:6px;font-size:11px;color:#6b7280}
+.footer{margin-top:24px;padding-top:12px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;font-size:10.5px;color:#9ca3af}
+.no-print{text-align:right;margin-bottom:18px}
+@media print{.no-print{display:none!important}}
+</style></head><body>
+<div class="no-print">
+  <button onclick="window.print()" style="background:#1e3a5f;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">🖨️ Save as PDF / Print</button>
 </div>
-
-<!-- Header -->
-<div class="header">
-    <div class="logo">Ma Foi<span>.</span>Careers</div>
-    <div class="meta">
-        <strong>Registration Acknowledgement</strong>
-        Date: ${today}<br>
-        Program: ${esc(student?.program || '—')} · ${esc(student?.location || '—')}
-    </div>
+<div class="hdr">
+  <div class="logo">Ma Foi<span>.</span>Careers</div>
+  <div class="meta"><strong>Registration Acknowledgement</strong>Date: ${today}<br>Program: ${esc(student?.program||'—')} · ${esc(student?.location||'—')}</div>
 </div>
-
 <div class="doc-title">REGISTRATION ACKNOWLEDGEMENT CERTIFICATE</div>
-
-<!-- ID Badge -->
 <div class="id-block">
-    <div>
-        <div class="id-label">Ma Foi ID</div>
-        <div class="id-val">${esc(maFoiId)}</div>
-    </div>
-    <div class="id-right">
-        Batch: ${esc(student?.batch_id || '—')}<br>
-        ${esc(student?.program || '')} Program<br>
-        ${esc(student?.location || '')} Centre
-    </div>
+  <div><div class="id-lbl">Ma Foi ID</div><div class="id-val">${esc(maFoiId)}</div></div>
+  <div class="id-right">Batch: ${esc(student?.batch_id||'—')}<br>${esc(student?.program||'')} Program<br>${esc(student?.location||'')} Centre</div>
 </div>
-
-<!-- Personal Information -->
-<div class="section">
-    <div class="section-title">Personal Information</div>
-    <table>
-        ${row('Full Name',              fullName || (student ? `${student.first_name} ${student.last_name}` : '—'))}
-        ${row('Email Address',          student?.email)}
-        ${row('Phone Number',           student?.phone)}
-        ${row('Gender',                 student?.gender)}
-        ${row('Date of Birth',          formatDate(student?.date_of_birth))}
-        ${row('Aadhaar Number',         maskAadhaar(student?.aadhaar_number))}
-        ${row('Address',                student?.address)}
-        ${row('Educational Qualification', student?.educational_qualification)}
-        ${row('Graduation Year',        student?.graduation_year)}
-    </table>
+<div class="section"><div class="sec-title">Personal Information</div><table>
+  ${row('Full Name', fullName||(student?`${student.first_name} ${student.last_name}`:null))}
+  ${row('Email Address', student?.email)}${row('Phone Number', student?.phone)}
+  ${row('Gender', student?.gender)}${row('Date of Birth', fmt(student?.date_of_birth))}
+  ${row('Aadhaar Number', mask(student?.aadhaar_number))}${row('Address', student?.address)}
+  ${row('Educational Qualification', student?.educational_qualification)}${row('Graduation Year', student?.graduation_year)}
+</table></div>
+<div class="section"><div class="sec-title">Program Enrollment</div><table>
+  ${row('Program', student?.program)}${row('Centre Location', student?.location)}${row('Batch ID', student?.batch_id)}
+</table></div>
+<div class="section"><div class="sec-title">Family Background</div><table>
+  ${row("Father's Name", student?.father_name)}${row("Mother's Name", student?.mother_name)}
+  ${row("Father's Occupation", student?.father_occupation)}${row('Parent Contact', student?.parent_contact)}
+  ${row('Total Family Members', student?.total_family_members)}${row('Annual Family Income', student?.annual_family_income)}
+  ${fAadh?row("Father's Aadhaar (Partial)",fAadh):''}
+</table></div>
+<div class="section"><div class="sec-title">Uploaded Documents</div><table>
+  <tr><td class="lbl" style="font-weight:700;color:#374151">Document</td><td class="val" style="font-weight:700;color:#374151">Status</td></tr>
+  ${docRows}
+</table></div>
+<div class="sigs">
+  <div><div class="sig">Student Signature</div></div>
+  <div><div class="sig">Centre Coordinator</div></div>
+  <div><div class="sig">Authorized Signatory</div></div>
 </div>
-
-<!-- Family Background -->
-<div class="section">
-    <div class="section-title">Family Background</div>
-    <table>
-        ${row("Father's Name",          student?.father_name)}
-        ${row("Mother's Name",          student?.mother_name)}
-        ${row("Father's Occupation",    student?.father_occupation)}
-        ${row('Parent Contact',         student?.parent_contact)}
-        ${row('Total Family Members',   student?.total_family_members)}
-        ${row('Annual Family Income',   student?.annual_family_income)}
-        ${fatherAadhaar ? row("Father's Aadhaar (Partial)", fatherAadhaar) : ''}
-    </table>
-</div>
-
-<!-- Documents -->
-<div class="section">
-    <div class="section-title">Uploaded Documents</div>
-    <table>
-        <tr>
-            <td class="lbl" style="font-weight:700;color:#374151">Document</td>
-            <td class="val" style="font-weight:700;color:#374151">Status</td>
-        </tr>
-        ${docRows}
-    </table>
-</div>
-
-<!-- Signature block -->
-<div class="sig-block">
-    <div><div class="sig-line">Student Signature</div></div>
-    <div><div class="sig-line">Centre Coordinator</div></div>
-    <div><div class="sig-line">Authorized Signatory</div></div>
-</div>
-
-<!-- Footer -->
 <div class="footer">
-    <span>Ma Foi Management Consultants Ltd. / CIEL HR Services</span>
-    <span>System generated · ${esc(maFoiId)} · ${new Date().toISOString().split('T')[0]}</span>
+  <span>Ma Foi Management Consultants Ltd. / CIEL HR Services</span>
+  <span>System generated · ${esc(maFoiId)} · ${new Date().toISOString().split('T')[0]}</span>
 </div>
+<script>window.addEventListener('load',()=>setTimeout(()=>window.print(),600));<\/script>
+</body></html>`;
 
-<script>
-    // Auto-trigger print dialog when opened
-    window.addEventListener('load', () => {
-        // Small delay to ensure fonts load
-        setTimeout(() => window.print(), 600);
-    });
-<\/script>
-</body>
-</html>`;
-
-    // Open in new window — user clicks "Save as PDF" in print dialog
-    const win = window.open('', '_blank', 'width=820,height=1000,scrollbars=yes');
-    if (!win) {
-        // Popup blocked — download as HTML file instead
-        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement('a');
-        a.href     = url;
-        a.download = `MaFoi_Registration_${maFoiId}.html`;
-        a.click();
-        URL.revokeObjectURL(url);
-        return;
-    }
-
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
+  const win = window.open('', '_blank', 'width=820,height=1000,scrollbars=yes');
+  if (!win) {
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    Object.assign(document.createElement('a'), {href:url, download:`MaFoi_Registration_${maFoiId}.html`}).click();
+    URL.revokeObjectURL(url);
+    return;
+  }
+  win.document.open(); win.document.write(html); win.document.close();
 }
 
-function esc(str) {
-    if (!str) return '';
-    const d = document.createElement('div');
-    d.textContent = String(str);
-    return d.innerHTML;
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML;
 }
 </script>
-
-<style>
-    @keyframes spin { to { transform: rotate(360deg); } }
-</style>
 </body>
 </html>

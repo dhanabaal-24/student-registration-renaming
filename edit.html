@@ -1,1223 +1,520 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Edit Registration — Ma Foi Careers</title>
-    <meta name="description" content="Edit your Ma Foi registration. Enter your Ma Foi ID and registered phone number to update your details." />
-
-    <!-- Preconnect -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/base.css" />
-    <link rel="stylesheet" href="css/components.css" />
-    <link rel="stylesheet" href="css/layout.css" />
-    <link rel="stylesheet" href="css/upload.css" />
-
-    <style>
-        /* ─── Verify Gate ─────────────────────────────────────── */
-        .verify-page {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: var(--space-8) var(--space-5);
-            background: var(--color-bg);
-        }
-
-        .verify-card {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-lg);
-            padding: var(--space-10) var(--space-8);
-            width: 100%;
-            max-width: 460px;
-            text-align: center;
-        }
-
-        .verify-icon {
-            width: 64px;
-            height: 64px;
-            border-radius: var(--radius-full);
-            background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 12%, transparent),
-                                                color-mix(in srgb, var(--color-accent) 10%, transparent));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto var(--space-5);
-        }
-
-        .verify-title {
-            font-size: var(--text-2xl);
-            font-weight: var(--weight-bold);
-            color: var(--color-text);
-            margin-bottom: var(--space-2);
-        }
-
-        .verify-subtitle {
-            font-size: var(--text-sm);
-            color: var(--color-text-muted);
-            margin-bottom: var(--space-8);
-            line-height: 1.6;
-        }
-
-        .verify-form {
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-4);
-            text-align: left;
-        }
-
-        .verify-footer {
-            margin-top: var(--space-6);
-            font-size: var(--text-xs);
-            color: var(--color-text-subtle);
-        }
-
-        .verify-footer a {
-            color: var(--color-primary);
-            text-decoration: none;
-            font-weight: var(--weight-medium);
-        }
-
-        .verify-footer a:hover { text-decoration: underline; }
-
-        /* ─── Loading overlay for edit form ──────────────────── */
-        .edit-loader {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 40vh;
-            gap: var(--space-4);
-            color: var(--color-text-muted);
-        }
-
-        .edit-loader__spinner {
-            width: 44px;
-            height: 44px;
-            border: 3px solid var(--color-border);
-            border-top-color: var(--color-primary);
-            border-radius: 50%;
-            animation: editSpin 0.8s linear infinite;
-        }
-
-        @keyframes editSpin { to { transform: rotate(360deg); } }
-
-        /* ─── Edit form page header ───────────────────────────── */
-        .edit-header {
-            background: var(--color-surface);
-            border-bottom: 1px solid var(--color-border);
-            padding: var(--space-4) var(--space-6);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: var(--z-header);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-
-        .edit-header__brand {
-            font-weight: var(--weight-bold);
-            font-size: var(--text-base);
-            color: var(--color-text);
-            letter-spacing: -0.01em;
-        }
-
-        .edit-header__id {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-            font-size: var(--text-sm);
-            color: var(--color-text-muted);
-        }
-
-        .edit-header__badge {
-            background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-            color: white;
-            font-weight: var(--weight-bold);
-            font-size: var(--text-xs);
-            padding: var(--space-1) var(--space-3);
-            border-radius: var(--radius-full);
-            letter-spacing: 0.05em;
-        }
-
-        /* ─── Edit sections ───────────────────────────────────── */
-        .edit-section {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-xl);
-            padding: var(--space-8);
-            margin-bottom: var(--space-6);
-        }
-
-        .edit-section__header {
-            display: flex;
-            align-items: center;
-            gap: var(--space-4);
-            margin-bottom: var(--space-6);
-            padding-bottom: var(--space-5);
-            border-bottom: 1px solid var(--color-border);
-        }
-
-        .edit-section__icon {
-            width: 42px;
-            height: 42px;
-            border-radius: var(--radius-lg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .edit-section__icon--blue {
-            background: color-mix(in srgb, var(--color-primary) 12%, transparent);
-            color: var(--color-primary);
-        }
-
-        .edit-section__icon--green {
-            background: color-mix(in srgb, var(--color-accent) 15%, transparent);
-            color: color-mix(in srgb, var(--color-accent) 70%, #000);
-        }
-
-        .edit-section__icon--amber {
-            background: color-mix(in srgb, #F59E0B 12%, transparent);
-            color: #D97706;
-        }
-
-        .edit-section__title {
-            font-size: var(--text-lg);
-            font-weight: var(--weight-semibold);
-            color: var(--color-text);
-        }
-
-        .edit-section__subtitle {
-            font-size: var(--text-sm);
-            color: var(--color-text-muted);
-            margin-top: var(--space-1);
-        }
-
-        /* ─── Notice banner ───────────────────────────────────── */
-        .notice-banner {
-            display: flex;
-            align-items: flex-start;
-            gap: var(--space-3);
-            background: color-mix(in srgb, #F59E0B 8%, transparent);
-            border: 1px solid color-mix(in srgb, #F59E0B 30%, transparent);
-            border-radius: var(--radius-lg);
-            padding: var(--space-4) var(--space-5);
-            margin-bottom: var(--space-6);
-            font-size: var(--text-sm);
-            color: var(--color-text);
-            line-height: 1.5;
-        }
-
-        .notice-banner svg { flex-shrink: 0; margin-top: 1px; color: #D97706; }
-
-        /* ─── Submit bar ──────────────────────────────────────── */
-        .edit-submit-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--space-4);
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-xl);
-            padding: var(--space-5) var(--space-8);
-            margin-top: var(--space-4);
-            flex-wrap: wrap;
-        }
-
-        .edit-submit-bar__hint {
-            font-size: var(--text-sm);
-            color: var(--color-text-muted);
-        }
-
-        /* ─── Existing doc item ───────────────────────────────── */
-        .existing-doc {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--space-3);
-            padding: var(--space-3) var(--space-4);
-            background: color-mix(in srgb, var(--color-accent) 6%, transparent);
-            border: 1px solid color-mix(in srgb, var(--color-accent) 20%, transparent);
-            border-radius: var(--radius-md);
-            margin-bottom: var(--space-2);
-            font-size: var(--text-sm);
-        }
-
-        .existing-doc__name {
-            font-weight: var(--weight-medium);
-            color: var(--color-text);
-            flex: 1;
-            min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .existing-doc__actions {
-            display: flex;
-            gap: var(--space-2);
-            flex-shrink: 0;
-        }
-
-        .existing-doc__btn {
-            font-size: var(--text-xs);
-            padding: var(--space-1) var(--space-3);
-            border-radius: var(--radius-md);
-            border: 1px solid var(--color-border);
-            background: var(--color-surface);
-            color: var(--color-text-muted);
-            cursor: pointer;
-            transition: border-color var(--duration-fast), color var(--duration-fast),
-                        background var(--duration-fast);
-            white-space: nowrap;
-        }
-
-        .existing-doc__btn:hover {
-            border-color: var(--color-primary);
-            color: var(--color-primary);
-            background: color-mix(in srgb, var(--color-primary) 6%, transparent);
-        }
-
-        /* ─── Responsive ─────────────────────────────────────── */
-        @media (max-width: 640px) {
-            .edit-section { padding: var(--space-5); }
-            .edit-header { padding: var(--space-3) var(--space-4); }
-            .edit-submit-bar {
-                flex-direction: column;
-                align-items: stretch;
-                padding: var(--space-4);
-            }
-            .edit-submit-bar .btn { width: 100%; justify-content: center; }
-            .verify-card { padding: var(--space-7) var(--space-5); }
-        }
-
-        @media (max-width: 480px) {
-            .existing-doc { flex-wrap: wrap; }
-            .existing-doc__actions { width: 100%; justify-content: flex-end; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Registration — Ma Foi Careers</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/upload.css">
 </head>
 <body>
 
-<!-- ── Toast region ──────────────────────────────────────────── -->
-<div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+<div class="portal-wrap">
 
-<!-- ════════════════════════════════════════════════════════════
-     PHASE 1: VERIFICATION GATE
-     Shown first. Hidden once verification succeeds.
-════════════════════════════════════════════════════════════════ -->
-<div id="verify-gate" class="verify-page">
-    <div class="verify-card" role="main">
+  <!-- Header -->
+  <header class="portal-header">
+    <a href="index.html" class="portal-logo">
+      <div class="portal-logo__icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div>
+        <span class="portal-logo__name">Ma Foi</span>
+        <span class="portal-logo__sub">Student Registration</span>
+      </div>
+    </a>
+    <div class="portal-header__badge" id="header-badge" style="display:none">Editing <span id="header-ma-foi-id"></span></div>
+  </header>
 
-        <!-- Icon -->
-        <div class="verify-icon" aria-hidden="true">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
-                 stroke="var(--color-primary)" stroke-width="1.8">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
+  <!-- ══════════════════════════════════════
+       PHASE 1: VERIFY GATE
+  ══════════════════════════════════════ -->
+  <div id="verify-gate" class="verify-wrap">
+    <div class="verify-card">
+      <div class="verify-card__icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+        </svg>
+      </div>
+      <div class="verify-card__title">Edit Registration</div>
+      <div class="verify-card__sub">Enter your Ma Foi ID and the phone number you registered with to access and update your details.</div>
+
+      <form class="verify-card__form" id="verify-form" novalidate>
+        <div class="ff" id="field-verify_ma_foi_id">
+          <label class="ff__label" for="verify_ma_foi_id">Ma Foi ID <span class="ff__req">*</span></label>
+          <input class="ff__input" type="text" id="verify_ma_foi_id" name="verify_ma_foi_id" placeholder="e.g. BLR001 or KOL042" autocomplete="off" spellcheck="false" maxlength="8" aria-required="true">
+          <span class="ff__error" id="verify_ma_foi_id-error"></span>
+        </div>
+        <div class="ff" id="field-verify_phone">
+          <label class="ff__label" for="verify_phone">Registered Phone Number <span class="ff__req">*</span></label>
+          <input class="ff__input" type="tel" id="verify_phone" name="verify_phone" placeholder="10-digit mobile number" inputmode="tel" autocomplete="tel" aria-required="true">
+          <span class="ff__error" id="verify_phone-error"></span>
         </div>
 
-        <h1 class="verify-title">Edit Registration</h1>
-        <p class="verify-subtitle">
-            Enter your Ma Foi ID and the phone number you registered with<br />
-            to access and update your details.
-        </p>
+        <div class="err-banner" id="verify-error-banner" hidden></div>
 
-        <form class="verify-form" id="verify-form" novalidate aria-label="Verification form">
+        <button type="submit" class="btn btn-primary" id="verify-btn" style="width:100%;justify-content:center">
+          Verify &amp; Continue
+        </button>
+      </form>
 
-            <!-- Ma Foi ID -->
-            <div class="form-field" id="field-verify_ma_foi_id">
-                <label class="form-field__label" for="verify_ma_foi_id">
-                    Ma Foi ID <span class="form-field__required" aria-label="required">*</span>
-                </label>
-                <input
-                    type="text"
-                    id="verify_ma_foi_id"
-                    name="verify_ma_foi_id"
-                    class="form-input"
-                    placeholder="e.g. BLR001 or KOL042"
-                    autocomplete="off"
-                    spellcheck="false"
-                    aria-required="true"
-                    aria-describedby="verify_ma_foi_id-error"
-                    maxlength="8"
-                />
-                <span class="form-field__error" id="verify_ma_foi_id-error" role="alert"></span>
-            </div>
-
-            <!-- Registered Phone -->
-            <div class="form-field" id="field-verify_phone">
-                <label class="form-field__label" for="verify_phone">
-                    Registered Phone Number <span class="form-field__required" aria-label="required">*</span>
-                </label>
-                <input
-                    type="tel"
-                    id="verify_phone"
-                    name="verify_phone"
-                    class="form-input"
-                    placeholder="10-digit mobile number"
-                    inputmode="tel"
-                    autocomplete="tel"
-                    aria-required="true"
-                    aria-describedby="verify_phone-error"
-                    maxlength="15"
-                />
-                <span class="form-field__error" id="verify_phone-error" role="alert"></span>
-            </div>
-
-            <!-- Error banner (shown for auth failure) -->
-            <div id="verify-error-banner" hidden
-                 role="alert"
-                 style="
-                    display: none;
-                    background: color-mix(in srgb, var(--color-danger) 8%, transparent);
-                    border: 1px solid color-mix(in srgb, var(--color-danger) 25%, transparent);
-                    border-radius: var(--radius-md);
-                    padding: var(--space-3) var(--space-4);
-                    font-size: var(--text-sm);
-                    color: var(--color-danger);
-                    text-align: left;
-                 ">
-            </div>
-
-            <button type="submit" id="verify-btn" class="btn btn--primary btn--lg" style="width:100%;justify-content:center">
-                Verify &amp; Continue
-            </button>
-        </form>
-
-        <p class="verify-footer">
-            Don't have a registration yet?
-            <a href="index.html">Register here →</a>
-        </p>
+      <div class="verify-card__footer">
+        Don't have a registration? <a href="index.html">Register here →</a>
+      </div>
     </div>
-</div>
+  </div>
 
+  <!-- ══════════════════════════════════════
+       PHASE 2: EDIT FORM
+  ══════════════════════════════════════ -->
+  <div id="edit-phase" hidden style="display:none">
 
-<!-- ════════════════════════════════════════════════════════════
-     PHASE 2: EDIT FORM
-     Hidden until verification succeeds.
-════════════════════════════════════════════════════════════════ -->
-<div id="edit-phase" hidden>
+    <!-- Top bar -->
+    <div class="form-page__topbar" style="top:56px">
+      <a href="index.html" class="form-page__back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        Home
+      </a>
+      <span class="form-page__title">Edit Registration</span>
+    </div>
 
-    <!-- Sticky edit header -->
-    <header class="edit-header" role="banner">
-        <span class="edit-header__brand">Ma Foi Careers — Edit Registration</span>
-        <div class="edit-header__id" aria-label="Editing registration">
-            <span>Editing</span>
-            <span class="edit-header__badge" id="header-ma-foi-id">…</span>
+    <div class="form-body" style="padding-bottom:120px">
+
+      <!-- Section 1: Student Information -->
+      <div class="edit-section" id="edit-section-student">
+        <div class="edit-section__head">
+          <div class="edit-section__icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div>
+            <div class="edit-section__title">Student Information</div>
+            <div class="edit-section__sub">Personal and academic details</div>
+          </div>
         </div>
-    </header>
 
-    <main class="page-wrapper" role="main" style="padding-top: var(--space-8); padding-bottom: var(--space-16);">
+        <div class="fg">
+          <div class="ff" id="field-first_name">
+            <label class="ff__label" for="first_name">First Name <span class="ff__req">*</span></label>
+            <input class="ff__input" type="text" id="first_name" name="first_name" placeholder="Your first name" autocomplete="given-name" aria-required="true">
+            <span class="ff__error" id="first_name-error"></span>
+          </div>
+          <div class="ff" id="field-last_name">
+            <label class="ff__label" for="last_name">Last Name <span class="ff__req">*</span></label>
+            <input class="ff__input" type="text" id="last_name" name="last_name" placeholder="Your last name" autocomplete="family-name" aria-required="true">
+            <span class="ff__error" id="last_name-error"></span>
+          </div>
+          <div class="ff" id="field-email">
+            <label class="ff__label" for="email">Email Address <span class="ff__req">*</span></label>
+            <input class="ff__input" type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" inputmode="email" aria-required="true">
+            <span class="ff__error" id="email-error"></span>
+          </div>
+          <div class="ff" id="field-phone">
+            <label class="ff__label" for="phone">Phone Number <span class="ff__req">*</span></label>
+            <input class="ff__input" type="tel" id="phone" name="phone" placeholder="10-digit mobile number" inputmode="tel" autocomplete="tel" aria-required="true">
+            <span class="ff__error" id="phone-error"></span>
+          </div>
+          <div class="ff" id="field-gender">
+            <label class="ff__label" for="gender">Gender <span class="ff__req">*</span></label>
+            <select class="ff__select" id="gender" name="gender" aria-required="true">
+              <option value="">Select gender</option>
+            </select>
+            <span class="ff__error" id="gender-error"></span>
+          </div>
+          <div class="ff" id="field-date_of_birth">
+            <label class="ff__label" for="date_of_birth">Date of Birth <span class="ff__req">*</span></label>
+            <input class="ff__input" type="date" id="date_of_birth" name="date_of_birth" aria-required="true">
+            <span class="ff__error" id="date_of_birth-error"></span>
+          </div>
+          <div class="ff fg--full" id="field-address">
+            <label class="ff__label" for="address">Address <span class="ff__req">*</span></label>
+            <textarea class="ff__input ff__textarea" id="address" name="address" placeholder="Full postal address" rows="3" autocomplete="street-address" aria-required="true"></textarea>
+            <span class="ff__error" id="address-error"></span>
+          </div>
+          <div class="ff" id="field-aadhaar_number">
+            <label class="ff__label" for="aadhaar_number">Aadhaar Number <span class="ff__req">*</span></label>
+            <input class="ff__input" type="text" id="aadhaar_number" name="aadhaar_number" placeholder="12-digit Aadhaar number" inputmode="numeric" maxlength="14" aria-required="true">
+            <span class="ff__error" id="aadhaar_number-error"></span>
+          </div>
+          <div class="ff" id="field-educational_qualification">
+            <label class="ff__label" for="educational_qualification">Educational Qualification <span class="ff__req">*</span></label>
+            <select class="ff__select" id="educational_qualification" name="educational_qualification" aria-required="true">
+              <option value="">Select qualification</option>
+            </select>
+            <span class="ff__error" id="educational_qualification-error"></span>
+          </div>
+          <div class="ff" id="field-graduation_year">
+            <label class="ff__label" for="graduation_year">Graduation Year <span class="ff__req">*</span></label>
+            <input class="ff__input" type="number" id="graduation_year" name="graduation_year" placeholder="e.g. 2023" inputmode="numeric" min="1990" max="2035" aria-required="true">
+            <span class="ff__error" id="graduation_year-error"></span>
+          </div>
+          <div class="ff" id="field-program">
+            <label class="ff__label" for="program">Program <span class="ff__req">*</span></label>
+            <select class="ff__select" id="program" name="program" aria-required="true">
+              <option value="">Select program</option>
+            </select>
+            <span class="ff__error" id="program-error"></span>
+          </div>
+          <div class="ff" id="field-location">
+            <label class="ff__label" for="location">Location <span class="ff__req">*</span></label>
+            <select class="ff__select" id="location" name="location" aria-required="true">
+              <option value="">Select location</option>
+            </select>
+            <span class="ff__error" id="location-error"></span>
+            <span class="ff__hint">Changing location does not change your Ma Foi ID.</span>
+          </div>
+        </div>
+      </div>
 
-        <!-- Edit form (shown after successful verification) -->
-        <form id="edit-form" novalidate aria-label="Edit registration form">
+      <!-- Section 2: Family Background -->
+      <div class="edit-section" id="edit-section-family">
+        <div class="edit-section__head">
+          <div class="edit-section__icon" style="background:#f0fdf4;color:#16a34a">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          </div>
+          <div>
+            <div class="edit-section__title">Family Background</div>
+            <div class="edit-section__sub">Parent and family details</div>
+          </div>
+        </div>
 
-            <!-- Notice banner -->
-            <div class="notice-banner" role="note">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="8" x2="12" y2="8"/>
-                    <line x1="12" y1="12" x2="12" y2="16"/>
-                </svg>
-                <span>
-                    Your <strong>Ma Foi ID</strong> will remain unchanged regardless of any edits you make.
-                    Only replace a document if you want to update it — unchanged documents will be kept.
-                </span>
+        <div class="fg">
+          <div class="ff" id="field-father_name">
+            <label class="ff__label" for="father_name">Father's Name</label>
+            <input class="ff__input" type="text" id="father_name" name="father_name" placeholder="Father's full name" autocomplete="off">
+            <span class="ff__error" id="father_name-error"></span>
+          </div>
+          <div class="ff" id="field-mother_name">
+            <label class="ff__label" for="mother_name">Mother's Name</label>
+            <input class="ff__input" type="text" id="mother_name" name="mother_name" placeholder="Mother's full name" autocomplete="off">
+            <span class="ff__error" id="mother_name-error"></span>
+          </div>
+          <div class="ff" id="field-father_occupation">
+            <label class="ff__label" for="father_occupation">Father's Occupation</label>
+            <input class="ff__input" type="text" id="father_occupation" name="father_occupation" placeholder="e.g. Farmer, Government employee">
+            <span class="ff__error" id="father_occupation-error"></span>
+          </div>
+          <div class="ff" id="field-parent_contact">
+            <label class="ff__label" for="parent_contact">Parent Contact Number</label>
+            <input class="ff__input" type="tel" id="parent_contact" name="parent_contact" placeholder="Parent's mobile number" inputmode="tel">
+            <span class="ff__error" id="parent_contact-error"></span>
+          </div>
+          <div class="ff" id="field-total_family_members">
+            <label class="ff__label" for="total_family_members">Total Family Members</label>
+            <input class="ff__input" type="number" id="total_family_members" name="total_family_members" placeholder="e.g. 4" inputmode="numeric" min="1" max="30">
+            <span class="ff__error" id="total_family_members-error"></span>
+          </div>
+          <div class="ff" id="field-annual_family_income">
+            <label class="ff__label" for="annual_family_income">Annual Family Income</label>
+            <select class="ff__select" id="annual_family_income" name="annual_family_income">
+              <option value="">Select income range</option>
+            </select>
+            <span class="ff__error" id="annual_family_income-error"></span>
+          </div>
+          <div class="ff fg--full" id="field-father_aadhaar_first3">
+            <label class="ff__label">Father's Aadhaar (Partial)</label>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Enter only the first 3 and last 3 digits of the Aadhaar card.</p>
+            <div class="aadhaar-pair">
+              <input class="ff__input aadhaar-pair__input" type="text" id="father_aadhaar_first3" name="father_aadhaar_first3" placeholder="First 3" inputmode="numeric" maxlength="3" aria-label="Father's Aadhaar first 3 digits">
+              <span class="aadhaar-pair__sep">··· XXXXXX ···</span>
+              <input class="ff__input aadhaar-pair__input" type="text" id="father_aadhaar_last3" name="father_aadhaar_last3" placeholder="Last 3" inputmode="numeric" maxlength="3" aria-label="Father's Aadhaar last 3 digits">
             </div>
+            <span class="ff__error" id="father_aadhaar_first3-error"></span>
+          </div>
+        </div>
+      </div>
 
-            <!-- ── SECTION 1: Student Information ─────────────── -->
-            <div class="edit-section" id="edit-section-student">
-                <div class="edit-section__header">
-                    <div class="edit-section__icon edit-section__icon--blue" aria-hidden="true">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="2">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                            <circle cx="12" cy="7" r="4"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="edit-section__title">Student Information</h2>
-                        <p class="edit-section__subtitle">Personal and academic details</p>
-                    </div>
-                </div>
+      <!-- Section 3: Documents -->
+      <div class="edit-section" id="edit-section-docs">
+        <div class="edit-section__head">
+          <div class="edit-section__icon" style="background:#fff7ed;color:#c2410c">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div>
+            <div class="edit-section__title">Documents</div>
+            <div class="edit-section__sub">View or replace your uploaded documents</div>
+          </div>
+        </div>
 
-                <div class="form-grid">
-                    <!-- First Name -->
-                    <div class="form-field" id="field-first_name">
-                        <label class="form-field__label" for="first_name">
-                            First Name <span class="form-field__required" aria-label="required">*</span>
-                        </label>
-                        <input type="text" id="first_name" name="first_name"
-                               class="form-input"
-                               placeholder="Your first name"
-                               autocomplete="given-name"
-                               aria-required="true"
-                               aria-describedby="first_name-error" />
-                        <span class="form-field__error" id="first_name-error" role="alert"></span>
-                    </div>
+        <div id="existing-docs-list"></div>
+        <div class="upload-grid-new" id="document-upload-grid"></div>
+      </div>
 
-                    <!-- Last Name -->
-                    <div class="form-field" id="field-last_name">
-                        <label class="form-field__label" for="last_name">
-                            Last Name <span class="form-field__required" aria-label="required">*</span>
-                        </label>
-                        <input type="text" id="last_name" name="last_name"
-                               class="form-input"
-                               placeholder="Your last name"
-                               autocomplete="family-name"
-                               aria-required="true"
-                               aria-describedby="last_name-error" />
-                        <span class="form-field__error" id="last_name-error" role="alert"></span>
-                    </div>
+    </div><!-- /form-body -->
 
-                    <!-- Email -->
-                    <div class="form-field" id="field-email">
-                        <label class="form-field__label" for="email">
-                            Email Address <span class="form-field__required" aria-label="required">*</span>
-                        </label>
-                        <input type="email" id="email" name="email"
-                               class="form-input"
-                               placeholder="you@example.com"
-                               autocomplete="email"
-                               inputmode="email"
-                               aria-required="true"
-                               aria-describedby="email-error" />
-                        <span class="form-field__error" id="email-error" role="alert"></span>
-                    </div>
+    <!-- Sticky submit bar -->
+    <div class="submit-bar">
+      <a href="index.html" class="btn btn-ghost">Cancel</a>
+      <button type="button" class="btn btn-primary" id="edit-submit-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Save Changes
+      </button>
+    </div>
 
-                    <!-- Phone -->
-                    <div class="form-field" id="field-phone">
-                        <label class="form-field__label" for="phone">
-                            Phone Number <span class="form-field__required" aria-label="required">*</span>
-                        </label>
-                        <input type="tel" id="phone" name="phone"
-                               class="form-input"
-                               placeholder="10-digit mobile number"
-                               inputmode="tel"
-                               autocomplete="tel"
-                               aria-required="true"
-                               aria-describedby="phone-error" />
-                        <span class="form-field__error" id="phone-error" role="alert"></span>
-                    </div>
+  </div><!-- /edit-phase -->
 
-                    <!-- Gender -->
-                    <div class="form-field" id="field-gender">
-                        <label class="form-field__label" for="gender">
-                            Gender <span class="form-field__required" aria-label="required">*</span>
-                        </label>
-                        <div class="form-select-wrap">
-                            <select id="gender" name="gender" class="form-select"
-                                    aria-required="true"
-                                    aria-describedby="gender-error">
-                                <option value="">Select gender</option>
-                            </select>
-                        </div>
-                        <span class="form-field__error" id="gender-error" role="alert"></span>
-                    </div>
+</div><!-- /portal-wrap -->
 
-                    <!-- Date of Birth -->
-                    <div class="form-field" id="field-date_of_birth">
-                        <label class="form-field__label" for="date_of_birth">
-                            Date of Birth <span class="form-field__required" aria-label="required">*</span>
-                        </label>
-                        <input type="date" id="date_of_birth" name="date_of_birth"
-                               class="form-input"
-                               aria-required="true"
-                               aria-describedby="date_of_birth-error" />
-                        <span class="form-field__error" id="date_of_birth-error" role="alert"></span>
-                    </div>
+<div id="toast-container" class="toast-container" aria-live="polite"></div>
 
-                    <!-- Address -->
-                    <div class="form-field form-grid--full" id="field-address">
-                        <label class="form-field__label" for="address">
-                            Address <span class="form-field__required" aria-label="required">*</span>
-                        </label>
-                        <textarea id="address" name="address"
-                                  class="form-input form-textarea"
-                                  placeholder="Full postal address"
-                                  rows="3"
-                                  autocomplete="street-address"
-                                  aria-required="true"
-                                  aria-describedby="address-error"></textarea>
-                        <span class="form-field__error" id="address-error" role="alert"></span>
-                    </div>
-
-                    <!-- Aadhaar Number -->
-                    <div class="form-field" id="field-aadhaar_number">
-                        <label class="form-field__label" for="aadhaar_number">
-                            Aadhaar Number <span class="form-field__required" aria-label="required">*</span>
-                        </label>
-                        <input type="text" id="aadhaar_number" name="aadhaar_number"
-                               class="form-input"
-                               placeholder="12-digit Aadhaar number"
-                               inputmode="numeric"
-                               maxlength="14"
-                               aria-required="true"
-                               aria-describedby="aadhaar_number-error" />
-                        <span class="form-field__error" id="aadhaar_number-error" role="alert"></span>
-                    </div>
-
-                    <!-- Educational Qualification -->
-                    <div class="form-field" id="field-educational_qualification">
-                        <label class="form-field__label" for="educational_qualification">
-                            Educational Qualification <span class="form-field__required" aria-label="required">*</span>
-                        </label>
-                        <div class="form-select-wrap">
-                            <select id="educational_qualification" name="educational_qualification"
-                                    class="form-select"
-                                    aria-required="true"
-                                    aria-describedby="educational_qualification-error">
-                                <option value="">Select qualification</option>
-                            </select>
-                        </div>
-                        <span class="form-field__error" id="educational_qualification-error" role="alert"></span>
-                    </div>
-
-                    <!-- Graduation Year -->
-                    <div class="form-field" id="field-graduation_year">
-                        <label class="form-field__label" for="graduation_year">
-                            Graduation Year <span class="form-field__required" aria-label="required">*</span>
-                        </label>
-                        <input type="number" id="graduation_year" name="graduation_year"
-                               class="form-input"
-                               placeholder="e.g. 2023"
-                               inputmode="numeric"
-                               min="1990" max="2035"
-                               aria-required="true"
-                               aria-describedby="graduation_year-error" />
-                        <span class="form-field__error" id="graduation_year-error" role="alert"></span>
-                    </div>
-
-                    <!-- Program -->
-                    <div class="form-field" id="field-program">
-                        <label class="form-field__label" for="program">
-                            Program <span class="form-field__required" aria-label="required">*</span>
-                        </label>
-                        <div class="form-select-wrap">
-                            <select id="program" name="program" class="form-select"
-                                    aria-required="true"
-                                    aria-describedby="program-error">
-                                <option value="">Select program</option>
-                            </select>
-                        </div>
-                        <span class="form-field__error" id="program-error" role="alert"></span>
-                    </div>
-
-                    <!-- Location -->
-                    <div class="form-field" id="field-location">
-                        <label class="form-field__label" for="location">
-                            Location <span class="form-field__required" aria-label="required">*</span>
-                        </label>
-                        <div class="form-select-wrap">
-                            <select id="location" name="location" class="form-select"
-                                    aria-required="true"
-                                    aria-describedby="location-error">
-                                <option value="">Select location</option>
-                            </select>
-                        </div>
-                        <span class="form-field__error" id="location-error" role="alert"></span>
-                        <span class="form-field__hint" style="font-size:var(--text-xs);color:var(--color-text-subtle);margin-top:var(--space-1);display:block">
-                            Changing location does not change your Ma Foi ID.
-                        </span>
-                    </div>
-                </div><!-- /form-grid -->
-            </div><!-- /edit-section-student -->
-
-
-            <!-- ── SECTION 2: Family Background ────────────────── -->
-            <div class="edit-section" id="edit-section-family">
-                <div class="edit-section__header">
-                    <div class="edit-section__icon edit-section__icon--green" aria-hidden="true">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="2">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="edit-section__title">Family Background</h2>
-                        <p class="edit-section__subtitle">Parent and family details</p>
-                    </div>
-                </div>
-
-                <div class="form-grid">
-                    <!-- Father's Name -->
-                    <div class="form-field" id="field-father_name">
-                        <label class="form-field__label" for="father_name">Father's Name</label>
-                        <input type="text" id="father_name" name="father_name"
-                               class="form-input"
-                               placeholder="Father's full name"
-                               autocomplete="off"
-                               aria-describedby="father_name-error" />
-                        <span class="form-field__error" id="father_name-error" role="alert"></span>
-                    </div>
-
-                    <!-- Mother's Name -->
-                    <div class="form-field" id="field-mother_name">
-                        <label class="form-field__label" for="mother_name">Mother's Name</label>
-                        <input type="text" id="mother_name" name="mother_name"
-                               class="form-input"
-                               placeholder="Mother's full name"
-                               autocomplete="off"
-                               aria-describedby="mother_name-error" />
-                        <span class="form-field__error" id="mother_name-error" role="alert"></span>
-                    </div>
-
-                    <!-- Father's Occupation -->
-                    <div class="form-field" id="field-father_occupation">
-                        <label class="form-field__label" for="father_occupation">Father's Occupation</label>
-                        <input type="text" id="father_occupation" name="father_occupation"
-                               class="form-input"
-                               placeholder="e.g. Farmer, Government employee"
-                               aria-describedby="father_occupation-error" />
-                        <span class="form-field__error" id="father_occupation-error" role="alert"></span>
-                    </div>
-
-                    <!-- Parent Contact -->
-                    <div class="form-field" id="field-parent_contact">
-                        <label class="form-field__label" for="parent_contact">Parent Contact Number</label>
-                        <input type="tel" id="parent_contact" name="parent_contact"
-                               class="form-input"
-                               placeholder="Parent's mobile number"
-                               inputmode="tel"
-                               aria-describedby="parent_contact-error" />
-                        <span class="form-field__error" id="parent_contact-error" role="alert"></span>
-                    </div>
-
-                    <!-- Total Family Members -->
-                    <div class="form-field" id="field-total_family_members">
-                        <label class="form-field__label" for="total_family_members">Total Family Members</label>
-                        <input type="number" id="total_family_members" name="total_family_members"
-                               class="form-input"
-                               placeholder="e.g. 4"
-                               inputmode="numeric"
-                               min="1" max="30"
-                               aria-describedby="total_family_members-error" />
-                        <span class="form-field__error" id="total_family_members-error" role="alert"></span>
-                    </div>
-
-                    <!-- Annual Family Income -->
-                    <div class="form-field" id="field-annual_family_income">
-                        <label class="form-field__label" for="annual_family_income">Annual Family Income</label>
-                        <div class="form-select-wrap">
-                            <select id="annual_family_income" name="annual_family_income"
-                                    class="form-select"
-                                    aria-describedby="annual_family_income-error">
-                                <option value="">Select income range</option>
-                            </select>
-                        </div>
-                        <span class="form-field__error" id="annual_family_income-error" role="alert"></span>
-                    </div>
-
-                    <!-- Father's Aadhaar (split) -->
-                    <div class="form-field form-grid--full" id="field-father_aadhaar_first3">
-                        <label class="form-field__label">Father's Aadhaar (Partial)</label>
-                        <p style="font-size:var(--text-xs);color:var(--color-text-muted);margin-bottom:var(--space-3)">
-                            Enter only the first 3 and last 3 digits of the Aadhaar card.
-                        </p>
-                        <div style="display:flex;align-items:center;gap:var(--space-3);max-width:340px">
-                            <input type="text" id="father_aadhaar_first3" name="father_aadhaar_first3"
-                                   class="form-input"
-                                   placeholder="First 3"
-                                   inputmode="numeric"
-                                   maxlength="3"
-                                   style="width:100px;flex-shrink:0;text-align:center;letter-spacing:0.2em"
-                                   aria-label="Father's Aadhaar first 3 digits"
-                                   aria-describedby="father_aadhaar_first3-error" />
-                            <span style="color:var(--color-text-subtle);font-size:var(--text-xl);flex-shrink:0"
-                                  aria-hidden="true">···XXXXXX···</span>
-                            <input type="text" id="father_aadhaar_last3" name="father_aadhaar_last3"
-                                   class="form-input"
-                                   placeholder="Last 3"
-                                   inputmode="numeric"
-                                   maxlength="3"
-                                   style="width:100px;flex-shrink:0;text-align:center;letter-spacing:0.2em"
-                                   aria-label="Father's Aadhaar last 3 digits"
-                                   aria-describedby="father_aadhaar_first3-error" />
-                        </div>
-                        <span class="form-field__error" id="father_aadhaar_first3-error" role="alert"></span>
-                    </div>
-                </div><!-- /form-grid -->
-            </div><!-- /edit-section-family -->
-
-
-            <!-- ── SECTION 3: Documents ────────────────────────── -->
-            <div class="edit-section" id="edit-section-docs">
-                <div class="edit-section__header">
-                    <div class="edit-section__icon edit-section__icon--amber" aria-hidden="true">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                            <polyline points="14 2 14 8 20 8"/>
-                            <line x1="16" y1="13" x2="8" y2="13"/>
-                            <line x1="16" y1="17" x2="8" y2="17"/>
-                            <polyline points="10 9 9 9 8 9"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="edit-section__title">Documents</h2>
-                        <p class="edit-section__subtitle">View or replace your uploaded documents</p>
-                    </div>
-                </div>
-
-                <!-- Existing documents list -->
-                <div id="existing-docs-list" aria-label="Existing uploaded documents"></div>
-
-                <!-- Upload slots for replacements (injected by documents.js) -->
-                <div id="document-upload-grid" class="upload-grid" aria-label="Document upload slots"></div>
-
-            </div><!-- /edit-section-docs -->
-
-
-            <!-- ── Submit Bar ──────────────────────────────────── -->
-            <div class="edit-submit-bar" role="contentinfo">
-                <p class="edit-submit-bar__hint">
-                    All required fields must be filled before saving.
-                </p>
-                <div style="display:flex;gap:var(--space-3);flex-wrap:wrap">
-                    <a href="index.html" class="btn btn--ghost">Cancel</a>
-                    <button type="submit" id="edit-submit-btn" class="btn btn--primary btn--lg">
-                        Save Changes
-                    </button>
-                </div>
-            </div>
-
-        </form><!-- /edit-form -->
-    </main>
-
-</div><!-- /edit-phase -->
-
-
-<!-- ════════════════════════════════════════════════════════════
-     JAVASCRIPT
-════════════════════════════════════════════════════════════════ -->
 <script type="module">
 'use strict';
 
-/**
- * UI STATE MACHINE — exactly one state active at a time:
- *   'idle'      — verify gate visible, waiting for input
- *   'verifying' — button spinner, waiting for Supabase response
- *   'success'   — edit-phase visible, edit-form visible, no loader anywhere
- *   'error'     — verify gate visible, error banner shown
- */
-
-import { PROGRAMS, LOCATIONS, GENDERS, QUALIFICATIONS, INCOME_RANGES }
-    from './js/config.js';
+import { PROGRAMS, LOCATIONS, GENDERS, QUALIFICATIONS, INCOME_RANGES } from './js/config.js';
 import { ToastManager }               from './js/toast.js';
 import { verifyAndLoad, submitUpdate } from './js/edit.js';
 import { initDocumentSlots }           from './js/documents.js';
 import {
-    validateName, validateEmail, validatePhone, validateAadhaar,
-    validateDateOfBirth, validateGraduationYear, validateSelect, validateAddress,
+  validateName, validateEmail, validatePhone, validateAadhaar,
+  validateDateOfBirth, validateGraduationYear, validateSelect, validateAddress,
 } from './js/validation.js';
 
 const toast = new ToastManager();
 let currentStudentId = null;
 let currentMaFoiId   = null;
 
-// ── DOM refs ────────────────────────────────────────────────
+// Pre-populate selects
+populateAllSelects();
+
+// ── DOM refs ──────────────────────────────────────────────────
 const verifyGate  = document.getElementById('verify-gate');
 const editPhase   = document.getElementById('edit-phase');
 const verifyForm  = document.getElementById('verify-form');
 const verifyBtn   = document.getElementById('verify-btn');
 const errBanner   = document.getElementById('verify-error-banner');
-const editForm    = document.getElementById('edit-form');
 
-// Pre-populate selects synchronously at startup so they're ready instantly
-populateAllSelects();
-
-// ════════════════════════════════════════════════════════
-// STATE TRANSITIONS
-// Each function sets exactly one UI state and nothing else.
-// ════════════════════════════════════════════════════════
+// ── State machine ─────────────────────────────────────────────
+function show(el) { el.removeAttribute('hidden'); el.style.display = ''; }
+function hide(el) { el.setAttribute('hidden', ''); el.style.display = 'none'; }
 
 function setState(state, payload) {
-    // Belt-and-suspenders: set both hidden attribute AND style.display
-    // so the element is hidden regardless of CSS specificity on display:flex classes
-    function show(el) { el.removeAttribute('hidden'); el.style.display = ''; }
-    function hide(el) { el.setAttribute('hidden', ''); el.style.display = 'none'; }
+  switch (state) {
+    case 'idle':
+      show(verifyGate); hide(editPhase);
+      setBtn(false, 'Verify &amp; Continue');
+      hideBanner(); break;
 
-    switch (state) {
+    case 'verifying':
+      show(verifyGate); hide(editPhase);
+      setBtn(true, '<span class="btn-spinner"></span> Verifying\u2026');
+      hideBanner(); break;
 
-        case 'idle':
-            show(verifyGate);
-            hide(editPhase);
-            setBtn(false, 'Verify &amp; Continue');
-            hideBanner();
-            break;
+    case 'success':
+      hide(verifyGate); show(editPhase);
+      setBtn(false, 'Verify &amp; Continue');
+      hideBanner();
+      // Show header badge
+      document.getElementById('header-ma-foi-id').textContent = payload.student.ma_foi_id;
+      document.getElementById('header-badge').style.display = '';
+      populateForm(payload.student, payload.documents);
+      requestAnimationFrame(() => {
+        document.getElementById('edit-section-student').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(() => document.getElementById('first_name')?.focus({ preventScroll: true }), 350);
+      });
+      break;
 
-        case 'verifying':
-            show(verifyGate);
-            hide(editPhase);
-            setBtn(true, '<span class="btn__spinner" aria-hidden="true"></span> Verifying…');
-            hideBanner();
-            break;
-
-        case 'success':
-            // Completely remove verify gate — user cannot scroll back to see it
-            hide(verifyGate);
-            show(editPhase);
-            setBtn(false, 'Verify &amp; Continue');
-            hideBanner();
-            document.getElementById('header-ma-foi-id').textContent = payload.student.ma_foi_id;
-            populateForm(payload.student, payload.documents);
-            scrollAndFocus();
-            break;
-
-        case 'error':
-            show(verifyGate);
-            hide(editPhase);
-            setBtn(false, 'Verify &amp; Continue');
-            showBanner(payload.message);
-            break;
-    }
+    case 'error':
+      show(verifyGate); hide(editPhase);
+      setBtn(false, 'Verify &amp; Continue');
+      showBanner(payload.message); break;
+  }
 }
 
-// ════════════════════════════════════════════════════════
-// VERIFICATION SUBMIT
-// ════════════════════════════════════════════════════════
-
+// ── Verification ──────────────────────────────────────────────
 verifyForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    clearFieldErrors();
+  e.preventDefault();
+  clearFieldErrors();
 
-    const idInput    = document.getElementById('verify_ma_foi_id');
-    const phoneInput = document.getElementById('verify_phone');
-    const maFoiId    = idInput.value.trim().toUpperCase();
-    const phone      = phoneInput.value.trim();
+  const maFoiId = document.getElementById('verify_ma_foi_id').value.trim().toUpperCase();
+  const phone   = document.getElementById('verify_phone').value.trim();
 
-    // Client-side validation
-    let hasError = false;
-    if (!maFoiId) {
-        setFieldError('verify_ma_foi_id', 'Please enter your Ma Foi ID.');
-        hasError = true;
-    } else if (!/^(BLR|KOL)\d{3}$/i.test(maFoiId)) {
-        setFieldError('verify_ma_foi_id', 'ID must be in format BLR001 or KOL001.');
-        hasError = true;
-    }
-    if (!phone) {
-        setFieldError('verify_phone', 'Please enter your registered phone number.');
-        hasError = true;
-    } else if (phone.replace(/\D/g, '').length < 10) {
-        setFieldError('verify_phone', 'Please enter a valid 10-digit phone number.');
-        hasError = true;
-    }
-    if (hasError) return;
+  let hasError = false;
+  if (!maFoiId) { setFieldError('verify_ma_foi_id', 'Please enter your Ma Foi ID.'); hasError = true; }
+  else if (!/^(BLR|KOL)\d{3}$/i.test(maFoiId)) { setFieldError('verify_ma_foi_id', 'ID must be in format BLR001 or KOL001.'); hasError = true; }
+  if (!phone) { setFieldError('verify_phone', 'Please enter your registered phone number.'); hasError = true; }
+  else if (phone.replace(/\D/g,'').length < 10) { setFieldError('verify_phone', 'Please enter a valid 10-digit phone number.'); hasError = true; }
+  if (hasError) return;
 
-    // Enter verifying state
-    setState('verifying');
-
-    try {
-        const { student, documents } = await verifyAndLoad(maFoiId, phone);
-        currentStudentId = student.id;
-        currentMaFoiId   = student.ma_foi_id;
-        // Single call — transitions directly to success, no intermediate states
-        setState('success', { student, documents });
-
-    } catch (err) {
-        setState('error', {
-            message: err.message || 'Verification failed. Please check your details and try again.'
-        });
-    }
-    // Note: no finally needed — both try and catch call setState which always resets the button
+  setState('verifying');
+  try {
+    const { student, documents } = await verifyAndLoad(maFoiId, phone);
+    currentStudentId = student.id;
+    currentMaFoiId   = student.ma_foi_id;
+    setState('success', { student, documents });
+  } catch (err) {
+    setState('error', { message: err.message || 'Verification failed. Please check your details.' });
+  }
 });
 
-// ════════════════════════════════════════════════════════
-// FORM POPULATION  (synchronous — no awaits)
-// ════════════════════════════════════════════════════════
-
+// ── Form population ───────────────────────────────────────────
 function populateForm(student, documents) {
-    // Student fields
-    setVal('first_name',               student.first_name);
-    setVal('last_name',                student.last_name);
-    setVal('email',                    student.email);
-    setVal('phone',                    student.phone);
-    setVal('date_of_birth',            student.date_of_birth);
-    setVal('address',                  student.address);
-    setVal('aadhaar_number',           student.aadhaar_number);
-    setVal('graduation_year',          student.graduation_year != null ? String(student.graduation_year) : '');
-    setSelectVal('gender',             student.gender);
-    setSelectVal('educational_qualification', student.educational_qualification);
-    setSelectVal('program',            student.program);
-    setSelectVal('location',           student.location);
+  const setV = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
+  const setSel = (id, val) => { if (!val) return; const el = document.getElementById(id); if (el) el.value = val; };
 
-    // Family fields
-    setVal('father_name',          student.father_name        || '');
-    setVal('mother_name',          student.mother_name        || '');
-    setVal('father_occupation',    student.father_occupation  || '');
-    setVal('parent_contact',       student.parent_contact     || '');
-    setVal('total_family_members', student.total_family_members != null ? String(student.total_family_members) : '');
-    setSelectVal('annual_family_income', student.annual_family_income || '');
+  setV('first_name', student.first_name);   setV('last_name', student.last_name);
+  setV('email', student.email);             setV('phone', student.phone);
+  setV('date_of_birth', student.date_of_birth);
+  setV('address', student.address);         setV('aadhaar_number', student.aadhaar_number);
+  setV('graduation_year', student.graduation_year != null ? String(student.graduation_year) : '');
+  setSel('gender', student.gender);
+  setSel('educational_qualification', student.educational_qualification);
+  setSel('program', student.program);       setSel('location', student.location);
+  setV('father_name', student.father_name || '');
+  setV('mother_name', student.mother_name || '');
+  setV('father_occupation', student.father_occupation || '');
+  setV('parent_contact', student.parent_contact || '');
+  setV('total_family_members', student.total_family_members != null ? String(student.total_family_members) : '');
+  setSel('annual_family_income', student.annual_family_income || '');
+  if (student.father_aadhaar_masked) {
+    const [f, l] = student.father_aadhaar_masked.split(':');
+    setV('father_aadhaar_first3', f||''); setV('father_aadhaar_last3', l||'');
+  }
 
-    if (student.father_aadhaar_masked) {
-        const [f, l] = student.father_aadhaar_masked.split(':');
-        setVal('father_aadhaar_first3', f || '');
-        setVal('father_aadhaar_last3',  l || '');
-    }
-
-    // Documents
-    renderExistingDocs(documents);
-    initDocumentSlots(document.getElementById('document-upload-grid'), documents);
-    bindInlineValidation();
+  renderExistingDocs(documents);
+  initDocumentSlots(document.getElementById('document-upload-grid'), documents);
+  bindInlineValidation();
 }
-
-function scrollAndFocus() {
-    // Use requestAnimationFrame so the DOM is painted before we scroll
-    requestAnimationFrame(() => {
-        editForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        // Focus first field after scroll settles
-        setTimeout(() => {
-            const first = document.getElementById('first_name');
-            if (first) first.focus({ preventScroll: true });
-        }, 350);
-    });
-}
-
-// ════════════════════════════════════════════════════════
-// DOCUMENTS
-// ════════════════════════════════════════════════════════
 
 function renderExistingDocs(documents) {
-    const container = document.getElementById('existing-docs-list');
-    if (!container) return;
-    container.innerHTML = '';
-
-    if (!documents || documents.length === 0) {
-        container.innerHTML = '<p style="font-size:var(--text-sm);color:var(--color-text-muted);margin-bottom:var(--space-4)">No documents found for this registration.</p>';
-        return;
+  const c = document.getElementById('existing-docs-list');
+  c.innerHTML = '';
+  if (!documents?.length) {
+    c.innerHTML = '<p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">No documents found for this registration.</p>';
+    return;
+  }
+  const frag = document.createDocumentFragment();
+  const h = document.createElement('p');
+  h.style.cssText = 'font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px';
+  h.textContent = 'Currently uploaded documents:';
+  frag.appendChild(h);
+  for (const doc of documents) {
+    const row = document.createElement('div');
+    row.className = 'doc-row';
+    row.dataset.docType = doc.doc_type;
+    const name = document.createElement('span');
+    name.className = 'doc-row__name';
+    name.title = doc.file_name || doc.doc_label;
+    name.textContent = doc.doc_label || doc.doc_type;
+    row.appendChild(name);
+    if (doc.public_url) {
+      const actions = document.createElement('div');
+      actions.style.display = 'flex'; actions.style.gap = '6px';
+      [['View', () => window.open(doc.public_url,'_blank','noopener,noreferrer')],
+       ['Download', () => { const a=Object.assign(document.createElement('a'),{href:doc.public_url,download:doc.file_name||doc.doc_label,target:'_blank',rel:'noopener noreferrer'}); a.click(); }]
+      ].forEach(([label, onClick]) => {
+        const btn = document.createElement('button');
+        btn.type = 'button'; btn.className = 'doc-row__btn';
+        btn.textContent = label; btn.addEventListener('click', onClick);
+        actions.appendChild(btn);
+      });
+      row.appendChild(actions);
     }
-
-    const frag = document.createDocumentFragment();
-
-    const h = mkEl('p', 'font-size:var(--text-sm);font-weight:var(--weight-semibold);color:var(--color-text);margin-bottom:var(--space-3)');
-    h.textContent = 'Currently uploaded documents:';
-    frag.appendChild(h);
-
-    for (const doc of documents) {
-        const row = mkEl('div');
-        row.className       = 'existing-doc';
-        row.dataset.docType = doc.doc_type;
-
-        const name = mkEl('span');
-        name.className   = 'existing-doc__name';
-        name.title       = doc.file_name || doc.doc_label;
-        name.textContent = doc.doc_label || doc.doc_type;
-
-        const actions = mkEl('div');
-        actions.className = 'existing-doc__actions';
-
-        if (doc.public_url) {
-            actions.appendChild(mkDocBtn('View',     `View ${doc.doc_label}`,     () => window.open(doc.public_url, '_blank', 'noopener,noreferrer')));
-            actions.appendChild(mkDocBtn('Download', `Download ${doc.doc_label}`, () => {
-                const a = Object.assign(document.createElement('a'), {
-                    href: doc.public_url, download: doc.file_name || doc.doc_label,
-                    target: '_blank', rel: 'noopener noreferrer'
-                });
-                a.click();
-            }));
-        }
-
-        row.appendChild(name);
-        row.appendChild(actions);
-        frag.appendChild(row);
-    }
-
-    const sep = mkEl('p', 'font-size:var(--text-sm);font-weight:var(--weight-semibold);color:var(--color-text);margin-top:var(--space-6);margin-bottom:var(--space-3)');
-    sep.textContent = 'Replace documents (optional):';
-    frag.appendChild(sep);
-
-    const hint = mkEl('p', 'font-size:var(--text-xs);color:var(--color-text-muted);margin-bottom:var(--space-4)');
-    hint.textContent = 'Upload a new file in any slot to replace it. Empty slots keep the existing file.';
-    frag.appendChild(hint);
-
-    container.appendChild(frag);
+    frag.appendChild(row);
+  }
+  const sep = document.createElement('p');
+  sep.style.cssText = 'font-size:13px;font-weight:600;color:var(--text);margin-top:20px;margin-bottom:6px';
+  sep.textContent = 'Replace documents (optional):';
+  frag.appendChild(sep);
+  const hint = document.createElement('p');
+  hint.style.cssText = 'font-size:12px;color:var(--text-muted);margin-bottom:14px';
+  hint.textContent = 'Upload a new file to replace an existing document. Empty slots keep the current file.';
+  frag.appendChild(hint);
+  c.appendChild(frag);
 }
 
-// ════════════════════════════════════════════════════════
-// EDIT FORM SUBMIT
-// ════════════════════════════════════════════════════════
+// ── Inline validation ─────────────────────────────────────────
+function bindInlineValidation() {
+  const validators = {
+    first_name: v => validateName(v,'First name'), last_name: v => validateName(v,'Last name'),
+    email: validateEmail, phone: validatePhone,
+    gender: v => validateSelect(v,'Gender'), date_of_birth: validateDateOfBirth,
+    address: validateAddress, aadhaar_number: validateAadhaar,
+    educational_qualification: v => validateSelect(v,'Educational qualification'),
+    graduation_year: validateGraduationYear,
+    program: v => validateSelect(v,'Program'), location: v => validateSelect(v,'Location'),
+  };
+  for (const [id, fn] of Object.entries(validators)) {
+    const input = document.getElementById(id);
+    if (!input) continue;
+    const apply = () => {
+      const r = fn(input.value?.trim());
+      const err = r?.valid === false ? (r.message||'Invalid') : '';
+      document.getElementById(`field-${id}`)?.classList.toggle('ff--error', !!err);
+      const el = document.getElementById(`${id}-error`);
+      if (el) el.textContent = err;
+    };
+    input.addEventListener('blur', apply);
+    input.addEventListener('input', () => {
+      if (document.getElementById(`field-${id}`)?.classList.contains('ff--error')) apply();
+    });
+  }
+}
 
-const editSubmitBtn = document.getElementById('edit-submit-btn');
-
-editForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!currentStudentId || !currentMaFoiId) {
-        toast.error('Session error. Please refresh and verify again.');
-        return;
-    }
-    await submitUpdate(
-        currentStudentId, currentMaFoiId,
-        collectStudentData(), collectFamilyData(),
-        editSubmitBtn
-    );
+// ── Submit ────────────────────────────────────────────────────
+document.getElementById('edit-submit-btn').addEventListener('click', async () => {
+  if (!currentStudentId || !currentMaFoiId) { toast.error('Session error. Please refresh and verify again.'); return; }
+  const v = id => document.getElementById(id)?.value?.trim() || '';
+  const studentData = {
+    first_name: v('first_name'), last_name: v('last_name'),
+    email: v('email'), phone: v('phone').replace(/\D/g,''),
+    gender: v('gender'), address: v('address'),
+    date_of_birth: v('date_of_birth'), aadhaar_number: v('aadhaar_number').replace(/\D/g,''),
+    educational_qualification: v('educational_qualification'),
+    graduation_year: v('graduation_year'), program: v('program'), location: v('location'),
+  };
+  const familyData = {
+    father_name: v('father_name'), mother_name: v('mother_name'),
+    father_occupation: v('father_occupation'), parent_contact: v('parent_contact').replace(/\D/g,''),
+    total_family_members: v('total_family_members'), annual_family_income: v('annual_family_income'),
+    father_aadhaar_first3: v('father_aadhaar_first3'), father_aadhaar_last3: v('father_aadhaar_last3'),
+  };
+  await submitUpdate(currentStudentId, currentMaFoiId, studentData, familyData, document.getElementById('edit-submit-btn'));
 });
 
-function collectStudentData() {
-    const v = id => document.getElementById(id)?.value?.trim() || '';
-    return {
-        first_name: v('first_name'), last_name: v('last_name'),
-        email: v('email'), phone: v('phone').replace(/\D/g,''),
-        gender: v('gender'), address: v('address'),
-        date_of_birth: v('date_of_birth'),
-        aadhaar_number: v('aadhaar_number').replace(/\D/g,''),
-        educational_qualification: v('educational_qualification'),
-        graduation_year: v('graduation_year'),
-        program: v('program'), location: v('location'),
-    };
-}
-
-function collectFamilyData() {
-    const v = id => document.getElementById(id)?.value?.trim() || '';
-    return {
-        father_name: v('father_name'), mother_name: v('mother_name'),
-        father_occupation: v('father_occupation'),
-        parent_contact: v('parent_contact').replace(/\D/g,''),
-        total_family_members: v('total_family_members'),
-        annual_family_income: v('annual_family_income'),
-        father_aadhaar_first3: v('father_aadhaar_first3'),
-        father_aadhaar_last3: v('father_aadhaar_last3'),
-    };
-}
-
-// ════════════════════════════════════════════════════════
-// SELECT POPULATION
-// ════════════════════════════════════════════════════════
-
+// ── Select population ─────────────────────────────────────────
 function populateAllSelects() {
-    populateSelect('gender',                   GENDERS);
-    populateSelect('educational_qualification', QUALIFICATIONS);
-    populateSelect('program',                  PROGRAMS);
-    populateSelect('location',                 LOCATIONS);
-    populateSelect('annual_family_income',     INCOME_RANGES);
+  populateSelect('gender', GENDERS);
+  populateSelect('educational_qualification', QUALIFICATIONS);
+  populateSelect('program', PROGRAMS);
+  populateSelect('location', LOCATIONS);
+  populateSelect('annual_family_income', INCOME_RANGES);
 }
 
 function populateSelect(id, options) {
-    const sel = document.getElementById(id);
-    if (!sel) return;
-    const frag = document.createDocumentFragment();
-    for (const opt of options) {
-        const o = document.createElement('option');
-        o.value = opt; o.textContent = opt;
-        frag.appendChild(o);
-    }
-    sel.appendChild(frag);
+  const sel = document.getElementById(id);
+  if (!sel) return;
+  const frag = document.createDocumentFragment();
+  for (const opt of options) {
+    const o = document.createElement('option');
+    o.value = opt; o.textContent = opt; frag.appendChild(o);
+  }
+  sel.appendChild(frag);
 }
 
-// ════════════════════════════════════════════════════════
-// INLINE VALIDATION
-// ════════════════════════════════════════════════════════
-
-function bindInlineValidation() {
-    const validators = {
-        first_name: v => validateName(v, 'First name'),
-        last_name:  v => validateName(v, 'Last name'),
-        email: validateEmail, phone: validatePhone,
-        gender:        v => validateSelect(v, 'Gender'),
-        date_of_birth: validateDateOfBirth,
-        address:       validateAddress,
-        aadhaar_number: validateAadhaar,
-        educational_qualification: v => validateSelect(v, 'Educational qualification'),
-        graduation_year: validateGraduationYear,
-        program:  v => validateSelect(v, 'Program'),
-        location: v => validateSelect(v, 'Location'),
-    };
-
-    for (const [id, fn] of Object.entries(validators)) {
-        const input = document.getElementById(id);
-        if (!input) continue;
-        const apply = () => {
-            const result  = fn(input.value?.trim());
-            // Validators return { valid, message } — never show the raw object
-            const isError = result && result.valid === false;
-            const msg     = isError ? (result.message || 'Invalid value.') : '';
-            const wrapper = document.getElementById(`field-${id}`);
-            const errEl   = document.getElementById(`${id}-error`);
-            wrapper?.classList.toggle('form-field--error', isError);
-            if (errEl) errEl.textContent = msg;
-        };
-        // Only validate on blur; clear on input if error already showing
-        input.addEventListener('blur', apply);
-        input.addEventListener('input', () => {
-            if (document.getElementById(`field-${id}`)?.classList.contains('form-field--error')) apply();
-        });
-    }
-}
-
-// ════════════════════════════════════════════════════════
-// SMALL HELPERS
-// ════════════════════════════════════════════════════════
-
-function setBtn(disabled, html) {
-    verifyBtn.disabled  = disabled;
-    verifyBtn.innerHTML = html;
-}
+// ── Helpers ───────────────────────────────────────────────────
+function setBtn(disabled, html) { verifyBtn.disabled = disabled; verifyBtn.innerHTML = html; }
 
 function showBanner(msg) {
-    errBanner.textContent  = msg;
-    errBanner.hidden       = false;
-    errBanner.style.display = 'block';
-    errBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  errBanner.textContent = msg; errBanner.hidden = false; errBanner.style.display = 'block';
+  errBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-function hideBanner() {
-    errBanner.hidden       = true;
-    errBanner.style.display = 'none';
-}
+function hideBanner() { errBanner.hidden = true; errBanner.style.display = 'none'; }
 
 function clearFieldErrors() {
-    ['verify_ma_foi_id', 'verify_phone'].forEach(id => {
-        document.getElementById(`field-${id}`)?.classList.remove('form-field--error');
-        const e = document.getElementById(`${id}-error`);
-        if (e) e.textContent = '';
-    });
-    hideBanner();
+  ['verify_ma_foi_id','verify_phone'].forEach(id => {
+    document.getElementById(`field-${id}`)?.classList.remove('ff--error');
+    const e = document.getElementById(`${id}-error`); if (e) e.textContent = '';
+  });
+  hideBanner();
 }
 
 function setFieldError(id, msg) {
-    document.getElementById(`field-${id}`)?.classList.add('form-field--error');
-    const e = document.getElementById(`${id}-error`);
-    if (e) e.textContent = msg;
-}
-
-function setVal(id, value) {
-    const el = document.getElementById(id);
-    if (el && value != null) el.value = value;
-}
-
-function setSelectVal(id, value) {
-    if (!value) return;
-    const el = document.getElementById(id);
-    if (el) el.value = value;
-}
-
-function mkEl(tag, cssText) {
-    const el = document.createElement(tag);
-    if (cssText) el.style.cssText = cssText;
-    return el;
-}
-
-function mkDocBtn(label, ariaLabel, onClick) {
-    const btn = document.createElement('button');
-    btn.type = 'button'; btn.className = 'existing-doc__btn';
-    btn.textContent = label; btn.setAttribute('aria-label', ariaLabel);
-    btn.addEventListener('click', onClick);
-    return btn;
+  document.getElementById(`field-${id}`)?.classList.add('ff--error');
+  const e = document.getElementById(`${id}-error`); if (e) e.textContent = msg;
 }
 </script>
 
