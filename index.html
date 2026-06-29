@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Ma Foi Student Registration Portal — BFSI and Data Analytics Programs">
+    <title>Student Registration — Ma Foi / ProSculpt</title>
+
+    <!-- Preload critical font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/upload.css">
+</head>
+<body>
+
+    <!-- ── Header ────────────────────────────────────────────── -->
+    <header class="app-header" role="banner">
+        <div class="app-header__inner">
+            <a href="index.html" class="app-logo" aria-label="Ma Foi ProSculpt Home">
+                <div class="app-logo__mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white"/>
+                    </svg>
+                </div>
+                <span class="app-logo__text">Ma Foi <span>·</span> ProSculpt</span>
+            </a>
+            <div class="app-header__actions">
+                <a href="edit.html" class="btn btn--ghost btn--sm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true">
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                    Edit Registration
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── Main ──────────────────────────────────────────────── -->
+    <main class="page-wrapper" role="main" id="main-content">
+
+        <!-- Hero -->
+        <div class="page-hero">
+            <div class="page-hero__eyebrow" aria-label="Program batch">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                BFSI &amp; Data Analytics Program
+            </div>
+            <h1 class="page-hero__title">Student Registration</h1>
+            <p class="page-hero__subtitle">
+                Complete all sections below. Your Ma Foi ID will be generated automatically
+                upon successful submission.
+            </p>
+        </div>
+
+        <!-- Progress Steps -->
+        <nav class="progress-steps" aria-label="Registration progress" id="progress-steps">
+            <div class="progress-step progress-step--active" data-step="1" aria-current="step">
+                <div class="progress-step__dot" aria-hidden="true">1</div>
+                <span class="progress-step__label">Student Info</span>
+            </div>
+            <div class="progress-step" data-step="2">
+                <div class="progress-step__dot" aria-hidden="true">2</div>
+                <span class="progress-step__label">Family</span>
+            </div>
+            <div class="progress-step" data-step="3">
+                <div class="progress-step__dot" aria-hidden="true">3</div>
+                <span class="progress-step__label">Documents</span>
+            </div>
+            <div class="progress-step" data-step="4">
+                <div class="progress-step__dot" aria-hidden="true">4</div>
+                <span class="progress-step__label">Review</span>
+            </div>
+        </nav>
+
+        <!-- ── STEP 1: Student Information ───────────────────── -->
+        <section id="step-1" class="step-section" aria-label="Step 1: Student Information">
+            <div class="section-card animate-fade-in">
+                <h2 class="section-card__title">
+                    <div class="section-card__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                    Student Information
+                </h2>
+
+                <div class="form-grid">
+                    <!-- First Name -->
+                    <div class="form-field" id="field-first_name">
+                        <label class="form-field__label" for="first_name">
+                            First Name <span class="form-field__required" aria-label="required">*</span>
+                        </label>
+                        <input type="text" id="first_name" name="first_name"
+                               class="form-input"
+                               placeholder="e.g. Dhanabal"
+                               autocomplete="given-name"
+                               aria-required="true"
+                               aria-describedby="first_name-error">
+                        <span class="form-field__error" id="first_name-error" role="alert" aria-live="assertive"></span>
+                    </div>
+
+                    <!-- Last Name -->
+                    <div class="form-field" id="field-last_name">
+                        <label class="form-field__label" for="last_name">
+                            Last Name <span class="form-field__required" aria-label="required">*</span>
+                        </label>
+                        <input type="text" id="last_name" name="last_name"
+                               class="form-input"
+                               placeholder="e.g. Kumar"
+                               autocomplete="family-name"
+                               aria-required="true"
+                               aria-describedby="last_name-error">
+                        <span class="form-field__error" id="last_name-error" role="alert" aria-live="assertive"></span>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-field" id="field-email">
+                        <label class="form-field__label" for="email">
+                            Email Address <span class="form-field__required" aria-label="required">*</span>
+                        </label>
+                        <input type="email" id="email" name="email"
+                               class="form-input"
+                               placeholder="name@example.com"
+                               autocomplete="email"
+                               inputmode="email"
+                               aria-required="true"
+                               aria-describedby="email-error">
+                        <span class="form-field__error" id="email-error" role="alert" aria-live="assertive"></span>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="form-field" id="field-phone">
+                        <label class="form-field__label" for="phone">
+                            Phone Number <span class="form-field__required" aria-label="required">*</span>
+                        </label>
+                        <input type="tel" id="phone" name="phone"
+                               class="form-input"
+                               placeholder="10-digit mobile number"
+                               autocomplete="tel"
+                               inputmode="tel"
+                               maxlength="10"
+                               pattern="[0-9]{10}"
+                               aria-required="true"
+                               aria-describedby="phone-error phone-hint">
+                        <span class="form-field__hint" id="phone-hint">Enter 10 digits without spaces or country code</span>
+                        <span class="form-field__error" id="phone-error" role="alert" aria-live="assertive"></span>
+                    </div>
+
+                    <!-- Gender -->
+                    <div class="form-field" id="field-gender">
+                        <label class="form-field__label" for="gender">
+                            Gender <span class="form-field__required" aria-label="required">*</span>
+                        </label>
+                        <div class="form-select-wrap">
+                            <select id="gender" name="gender" class="form-select"
+                                    aria-required="true"
+                                    aria-describedby="gender-error">
+                                <option value="">Select gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                                <option value="Prefer not to say">Prefer not to say</option>
+                            </select>
+                        </div>
+                        <span class="form-field__error" id="gender-error" role="alert" aria-live="assertive"></span>
+                    </div>
+
+                    <!-- Date of Birth -->
+                    <div class="form-field" id="field-date_of_birth">
+                        <label class="form-field__label" for="date_of_birth">
+                            Date of Birth <span class="form-field__required" aria-label="required">*</span>
+                        </label>
+                        <input type="date" id="date_of_birth" name="date_of_birth"
+                               class="form-input"
+                               autocomplete="bday"
+                               aria-required="true"
+                               aria-describedby="date_of_birth-error">
+                        <span class="form-field__error" id="date_of_birth-error" role="alert" aria-live="assertive"></span>
+                    </div>
+
+                    <!-- Address - full width -->
+                    <div class="form-field form-grid--full" id="field-address">
+                        <label class="form-field__label" for="address">
+                            Address <span class="form-field__required" aria-label="required">*</span>
+                        </label>
+                        <textarea id="address" name="address"
+                                  class="form-input form-textarea"
+                                  placeholder="House No., Street, Area, City, State — PIN Code"
+                                  autocomplete="street-address"
+                                  rows="3"
+                                  aria-required="true"
+                                  aria-describedby="address-error"></textarea>
+                        <span class="form-field__error" id="address-error" role="alert" aria-live="assertive"></span>
+                    </div>
+
+                    <!-- Aadhaar -->
+                    <div class="form-field" id="field-aadhaar_number">
+                        <label class="form-field__label" for="aadhaar_number">
+                            Aadhaar Number <span class="form-field__required" aria-label="required">*</span>
+                        </label>
+                        <input type="text" id="aadhaar_number" name="aadhaar_number"
+                               class="form-input"
+                               placeholder="12-digit Aadhaar number"
+                               maxlength="12"
+                               pattern="[0-9]{12}"
+                               inputmode="numeric"
+                               autocomplete="off"
+                               aria-required="true"
+                               aria-describedby="aadhaar_number-error aadhaar-hint">
+                        <span class="form-field__hint" id="aadhaar-hint">Your Aadhaar number is kept confidential and encrypted</span>
+                        <span class="form-field__error" id="aadhaar_number-error" role="alert" aria-live="assertive"></span>
+                    </div>
+
+                    <!-- Educational Qualification -->
+                    <div class="form-field" id="field-educational_qualification">
+                        <label class="form-field__label" for="educational_qualification">
+                            Educational Qualification <span class="form-field__required" aria-label="required">*</span>
+                        </label>
+                        <div class="form-select-wrap">
+                            <select id="educational_qualification" name="educational_qualification"
+                                    class="form-select"
+                                    aria-required="true"
+                                    aria-describedby="educational_qualification-error">
+                                <option value="">Select qualification</option>
+                                <option value="High School (10th)">High School (10th)</option>
+                                <option value="12th / Intermediate">12th / Intermediate</option>
+                                <option value="Diploma">Diploma</option>
+                                <option value="B.Com">B.Com</option>
+                                <option value="B.Sc">B.Sc</option>
+                                <option value="B.A">B.A</option>
+                                <option value="B.Tech / B.E">B.Tech / B.E</option>
+                                <option value="BBA">BBA</option>
+                                <option value="BCA">BCA</option>
+                                <option value="Other Graduate">Other Graduate</option>
+                                <option value="Post Graduate">Post Graduate</option>
+                            </select>
+                        </div>
+                        <span class="form-field__error" id="educational_qualification-error" role="alert" aria-live="assertive"></span>
+                    </div>
+
+                    <!-- Graduation Year -->
+                    <div class="form-field" id="field-graduation_year">
+                        <label class="form-field__label" for="graduation_year">
+                            Graduation Year <span class="form-field__required" aria-label="required">*</span>
+                        </label>
+                        <input type="number" id="graduation_year" name="graduation_year"
+                               class="form-input"
+                               placeholder="e.g. 2024"
+                               min="1990" max="2035"
+                               inputmode="numeric"
+                               aria-required="true"
+                               aria-describedby="graduation_year-error">
+                        <span class="form-field__error" id="graduation_year-error" role="alert" aria-live="assertive"></span>
+                    </div>
+
+                    <!-- Program -->
+                    <div class="form-field" id="field-program">
+                        <label class="form-field__label" for="program">
+                            Program <span class="form-field__required" aria-label="required">*</span>
+                        </label>
+                        <div class="form-select-wrap">
+                            <select id="program" name="program" class="form-select"
+                                    aria-required="true"
+                                    aria-describedby="program-error">
+                                <option value="">Select program</option>
+                                <option value="BFSI">BFSI (Banking, Financial Services &amp; Insurance)</option>
+                                <option value="Data Analytics">Data Analytics</option>
+                            </select>
+                        </div>
+                        <span class="form-field__error" id="program-error" role="alert" aria-live="assertive"></span>
+                    </div>
+
+                    <!-- Location -->
+                    <div class="form-field" id="field-location">
+                        <label class="form-field__label" for="location">
+                            Centre Location <span class="form-field__required" aria-label="required">*</span>
+                        </label>
+                        <div class="form-select-wrap">
+                            <select id="location" name="location" class="form-select"
+                                    aria-required="true"
+                                    aria-describedby="location-error">
+                                <option value="">Select location</option>
+                                <option value="Bangalore">Bangalore</option>
+                                <option value="Kolkata">Kolkata</option>
+                            </select>
+                        </div>
+                        <span class="form-field__error" id="location-error" role="alert" aria-live="assertive"></span>
+                    </div>
+                </div>
+
+                <!-- Step 1 Navigation -->
+                <div class="form-nav form-nav--right">
+                    <button type="button" class="btn btn--primary" id="btn-step1-next"
+                            aria-label="Continue to Family Background">
+                        Continue
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── STEP 2: Family Background ─────────────────────── -->
+        <section id="step-2" class="step-section" aria-label="Step 2: Family Background" hidden>
+            <div class="section-card animate-fade-in">
+                <h2 class="section-card__title">
+                    <div class="section-card__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                    </div>
+                    Family Background
+                    <span class="badge badge--primary" style="margin-left:auto;font-size:11px;">Optional</span>
+                </h2>
+
+                <div class="form-grid">
+                    <div class="form-field" id="field-father_name">
+                        <label class="form-field__label" for="father_name">Father's Name</label>
+                        <input type="text" id="father_name" name="father_name"
+                               class="form-input" placeholder="Father's full name"
+                               autocomplete="off"
+                               aria-describedby="father_name-error">
+                        <span class="form-field__error" id="father_name-error" role="alert" aria-live="assertive"></span>
+                    </div>
+
+                    <div class="form-field" id="field-mother_name">
+                        <label class="form-field__label" for="mother_name">Mother's Name</label>
+                        <input type="text" id="mother_name" name="mother_name"
+                               class="form-input" placeholder="Mother's full name"
+                               autocomplete="off">
+                    </div>
+
+                    <div class="form-field" id="field-father_occupation">
+                        <label class="form-field__label" for="father_occupation">Father's Occupation</label>
+                        <input type="text" id="father_occupation" name="father_occupation"
+                               class="form-input" placeholder="e.g. Farmer, Government employee">
+                    </div>
+
+                    <div class="form-field" id="field-parent_contact">
+                        <label class="form-field__label" for="parent_contact">Parent Contact Number</label>
+                        <input type="tel" id="parent_contact" name="parent_contact"
+                               class="form-input" placeholder="10-digit mobile number"
+                               maxlength="10" inputmode="tel"
+                               aria-describedby="parent_contact-error">
+                        <span class="form-field__error" id="parent_contact-error" role="alert" aria-live="assertive"></span>
+                    </div>
+
+                    <div class="form-field" id="field-total_family_members">
+                        <label class="form-field__label" for="total_family_members">Total Family Members</label>
+                        <input type="number" id="total_family_members" name="total_family_members"
+                               class="form-input" placeholder="e.g. 4"
+                               min="1" max="30" inputmode="numeric"
+                               aria-describedby="total_family_members-error">
+                        <span class="form-field__error" id="total_family_members-error" role="alert" aria-live="assertive"></span>
+                    </div>
+
+                    <div class="form-field" id="field-annual_family_income">
+                        <label class="form-field__label" for="annual_family_income">Annual Family Income</label>
+                        <div class="form-select-wrap">
+                            <select id="annual_family_income" name="annual_family_income" class="form-select">
+                                <option value="">Select income range</option>
+                                <option value="Below ₹1,00,000">Below ₹1,00,000</option>
+                                <option value="₹1,00,000 – ₹2,50,000">₹1,00,000 – ₹2,50,000</option>
+                                <option value="₹2,50,000 – ₹5,00,000">₹2,50,000 – ₹5,00,000</option>
+                                <option value="₹5,00,000 – ₹10,00,000">₹5,00,000 – ₹10,00,000</option>
+                                <option value="Above ₹10,00,000">Above ₹10,00,000</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Father's Aadhaar Partial - full width -->
+                    <div class="form-field form-grid--full" id="field-father_aadhaar_first3">
+                        <label class="form-field__label">
+                            Father's Aadhaar Number
+                            <span style="font-size:11px;color:var(--color-text-muted);font-weight:400;"> (First 3 &amp; Last 3 digits only)</span>
+                        </label>
+                        <div class="aadhaar-group" role="group" aria-label="Father's Aadhaar partial digits">
+                            <input type="text" id="father_aadhaar_first3" name="father_aadhaar_first3"
+                                   class="form-input" placeholder="XXX"
+                                   maxlength="3" inputmode="numeric" pattern="[0-9]{3}"
+                                   aria-label="First 3 digits"
+                                   aria-describedby="father_aadhaar-error"
+                                   style="max-width:90px;">
+                            <span class="aadhaar-group__sep" aria-hidden="true">···</span>
+                            <div style="display:flex;align-items:center;gap:4px;color:var(--color-text-muted);font-size:13px;font-weight:600;">
+                                <span aria-hidden="true">XXXXXX</span>
+                            </div>
+                            <span class="aadhaar-group__sep" aria-hidden="true">···</span>
+                            <input type="text" id="father_aadhaar_last3" name="father_aadhaar_last3"
+                                   class="form-input" placeholder="XXX"
+                                   maxlength="3" inputmode="numeric" pattern="[0-9]{3}"
+                                   aria-label="Last 3 digits"
+                                   aria-describedby="father_aadhaar-error"
+                                   style="max-width:90px;">
+                        </div>
+                        <span class="form-field__error" id="father_aadhaar-error" role="alert" aria-live="assertive"></span>
+                        <span class="form-field__hint">Only partial digits are collected to protect privacy</span>
+                    </div>
+                </div>
+
+                <div class="form-nav">
+                    <button type="button" class="btn btn--ghost" id="btn-step2-back">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+                        Back
+                    </button>
+                    <button type="button" class="btn btn--primary" id="btn-step2-next">
+                        Continue to Documents
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── STEP 3: Document Upload ────────────────────────── -->
+        <section id="step-3" class="step-section" aria-label="Step 3: Document Upload" hidden>
+            <div class="section-card animate-fade-in">
+                <h2 class="section-card__title">
+                    <div class="section-card__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    </div>
+                    Document Upload
+                </h2>
+
+                <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:var(--space-6);">
+                    Upload all required documents. Accepted formats: PDF, JPG, JPEG, PNG.
+                    Maximum file size: <strong>5 MB</strong> per document.
+                </p>
+
+                <!-- Document slots rendered here by JS -->
+                <div class="upload-grid" id="upload-grid" aria-label="Document upload slots">
+                    <!-- Slots injected by documents.js -->
+                </div>
+
+                <div class="form-nav">
+                    <button type="button" class="btn btn--ghost" id="btn-step3-back">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+                        Back
+                    </button>
+                    <button type="button" class="btn btn--primary" id="btn-step3-next">
+                        Review &amp; Submit
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── STEP 4: Review & Submit ────────────────────────── -->
+        <section id="step-4" class="step-section" aria-label="Step 4: Review and Submit" hidden>
+            <div class="section-card animate-fade-in">
+                <h2 class="section-card__title">
+                    <div class="section-card__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                    </div>
+                    Review Your Information
+                </h2>
+
+                <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:var(--space-6);">
+                    Please review all information carefully before submitting.
+                    Once submitted, use <strong>Edit Registration</strong> to make changes.
+                </p>
+
+                <!-- Review content injected by main.js -->
+                <div id="review-content" aria-label="Registration summary">
+                    <div class="skeleton" style="height:200px;border-radius:12px;"></div>
+                </div>
+
+                <div class="form-nav">
+                    <button type="button" class="btn btn--ghost" id="btn-step4-back">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+                        Back to Documents
+                    </button>
+                    <button type="button" class="btn btn--primary btn--xl" id="btn-submit"
+                            aria-label="Submit registration">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                        Submit Registration
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Skip link for accessibility -->
+    <a href="#main-content" class="visually-hidden" style="position:absolute;top:0;left:0;">Skip to main content</a>
+
+    <!-- ── Scripts ────────────────────────────────────────────── -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
