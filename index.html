@@ -27,7 +27,7 @@
         <span class="portal-logo__sub">Student Registration</span>
       </div>
     </a>
-    <div class="portal-header__badge">Skilling and Employability Program for Youth_NF-HDFC</div>
+    <div class="portal-header__badge">Skilling & Employability Program for Youth_NF-HDFC</div>
   </header>
 
   <!-- ══════════════════════════════════════
@@ -66,6 +66,177 @@
       </a>
     </div>
   </div>
+
+  <!-- ══════════════════════════════════════
+       PROGRAM SELECTION SCREEN
+       Shown after "New Registration" is clicked
+  ══════════════════════════════════════ -->
+  <div id="program-select" class="landing-body" hidden style="display:none">
+
+    <div style="width:100%;max-width:600px;margin:0 auto">
+
+      <!-- Back link -->
+      <button id="prog-back" type="button" style="
+        display:inline-flex;align-items:center;gap:6px;
+        background:none;border:none;cursor:pointer;
+        font-size:13.5px;font-weight:500;color:var(--text-secondary);
+        font-family:var(--font);padding:6px 0;margin-bottom:var(--sp-8);
+        transition:color .15s;
+      " onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-secondary)'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+
+      <!-- Heading -->
+      <div style="text-align:center;margin-bottom:var(--sp-8)">
+        <h1 style="font-size:clamp(22px,4vw,32px);font-weight:800;color:var(--primary);letter-spacing:-.4px;margin-bottom:10px">
+          Select Your Program
+        </h1>
+        <p style="font-size:15px;color:var(--text-secondary);line-height:1.6">
+          Choose the program you are registering for
+        </p>
+      </div>
+
+      <!-- Program cards -->
+      <div id="prog-cards" style="
+        display:grid;
+        grid-template-columns:repeat(2,1fr);
+        gap:20px;
+      ">
+
+        <!-- Card 1: Nasscom Foundation – HDFC -->
+        <button id="prog-nasscom" type="button" class="prog-card" style="
+          background:var(--surface);
+          border:1.5px solid var(--border);
+          border-radius:18px;
+          padding:28px 24px;
+          text-align:left;
+          cursor:pointer;
+          display:flex;flex-direction:column;
+          transition:box-shadow .2s,transform .2s,border-color .2s;
+          box-shadow:0 2px 8px rgba(0,0,0,.06);
+          font-family:var(--font);
+          position:relative;
+          overflow:hidden;
+        ">
+          <!-- Accent bar top -->
+          <div style="position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#1e3a5f,#2563eb)"></div>
+
+          <!-- Icon -->
+          <div style="
+            width:52px;height:52px;
+            background:linear-gradient(135deg,#eff6ff,#dbeafe);
+            border-radius:14px;
+            display:flex;align-items:center;justify-content:center;
+            margin-bottom:18px;color:var(--accent);
+            flex-shrink:0;
+          ">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+            </svg>
+          </div>
+
+          <!-- Text -->
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px;line-height:1.25">
+            Nasscom Foundation – HDFC
+          </div>
+          <div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:20px;flex:1">
+            Data Analytics (DA) &amp; BFSI
+          </div>
+
+          <!-- Badge -->
+          <div style="
+            display:inline-flex;align-items:center;gap:5px;
+            font-size:12.5px;font-weight:600;color:var(--accent);
+          ">
+            Register Now
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </button>
+
+        <!-- Card 2: Bajaj FinServ (Coming Soon) -->
+        <button id="prog-bajaj" type="button" class="prog-card" style="
+          background:var(--surface);
+          border:1.5px solid var(--border);
+          border-radius:18px;
+          padding:28px 24px;
+          text-align:left;
+          cursor:pointer;
+          display:flex;flex-direction:column;
+          transition:box-shadow .2s,transform .2s,border-color .2s;
+          box-shadow:0 2px 8px rgba(0,0,0,.06);
+          font-family:var(--font);
+          position:relative;
+          overflow:hidden;
+          opacity:.85;
+        ">
+          <!-- Accent bar top -->
+          <div style="position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#b45309,#d97706)"></div>
+
+          <!-- Coming Soon chip -->
+          <div style="
+            position:absolute;top:16px;right:16px;
+            background:#fef3c7;color:#92400e;
+            font-size:10.5px;font-weight:700;
+            padding:3px 9px;border-radius:999px;
+            letter-spacing:.04em;text-transform:uppercase;
+          ">Coming Soon</div>
+
+          <!-- Icon -->
+          <div style="
+            width:52px;height:52px;
+            background:linear-gradient(135deg,#fffbeb,#fef3c7);
+            border-radius:14px;
+            display:flex;align-items:center;justify-content:center;
+            margin-bottom:18px;color:#d97706;
+            flex-shrink:0;
+          ">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="7" width="20" height="14" rx="2"/>
+              <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+              <line x1="12" y1="12" x2="12" y2="16"/>
+              <line x1="10" y1="14" x2="14" y2="14"/>
+            </svg>
+          </div>
+
+          <!-- Text -->
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px;line-height:1.25">
+            Bajaj FinServ
+          </div>
+          <div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:20px;flex:1">
+            Gold Loan &amp; MFI
+          </div>
+
+          <!-- Badge -->
+          <div style="
+            display:inline-flex;align-items:center;gap:5px;
+            font-size:12.5px;font-weight:600;color:#d97706;
+          ">
+            Coming Soon
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+        </button>
+
+      </div><!-- /prog-cards -->
+    </div>
+  </div><!-- /program-select -->
+
+  <style>
+    /* Hover effects for program cards */
+    .prog-card:hover {
+      box-shadow: 0 8px 28px rgba(0,0,0,.10) !important;
+      transform: translateY(-3px);
+      border-color: var(--border-strong) !important;
+    }
+    .prog-card:active { transform: translateY(-1px) !important; }
+
+    /* Responsive: stack cards on mobile */
+    @media (max-width: 520px) {
+      #prog-cards { grid-template-columns: 1fr !important; }
+      #program-select { padding: 24px 16px 40px !important; }
+    }
+  </style>
 
   <!-- ══════════════════════════════════════
        REGISTRATION FORM (hidden until card clicked)
@@ -370,22 +541,60 @@ import {
 } from './js/validation.js';
 import { validateAllDocuments, highlightMissingDocs } from './js/documents.js';
 
-// ── Landing → form transition ──────────────────────────────────
-const landing = document.getElementById('landing');
-const formPage = document.getElementById('reg-form-page');
+// ── Screen references ─────────────────────────────────────────
+const landing    = document.getElementById('landing');
+const progSelect = document.getElementById('program-select');
+const formPage   = document.getElementById('reg-form-page');
 
+function showScreen(screen) {
+  // Hide all screens
+  landing.style.display    = 'none';
+  progSelect.hidden        = true;
+  progSelect.style.display = 'none';
+  formPage.hidden          = true;
+  // Show the target
+  if (screen === 'landing') {
+    landing.style.display = '';
+  } else if (screen === 'program') {
+    progSelect.hidden        = false;
+    progSelect.style.display = '';
+  } else if (screen === 'form') {
+    formPage.hidden = false;
+  }
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+// Landing → Program selection
 document.getElementById('go-register').addEventListener('click', e => {
   e.preventDefault();
-  landing.style.display = 'none';
-  formPage.hidden = false;
-  window.scrollTo({ top: 0, behavior: 'instant' });
+  showScreen('program');
 });
 
+// Program screen → back to Landing
+document.getElementById('prog-back').addEventListener('click', () => {
+  showScreen('landing');
+});
+
+// Nasscom card → open registration form (existing flow, unchanged)
+document.getElementById('prog-nasscom').addEventListener('click', () => {
+  showScreen('form');
+});
+
+// Bajaj card → Coming Soon (no action)
+document.getElementById('prog-bajaj').addEventListener('click', () => {
+  const btn = document.getElementById('prog-bajaj');
+  // Brief visual feedback, no navigation
+  const orig = btn.style.transform;
+  btn.style.transform = 'scale(0.98)';
+  setTimeout(() => { btn.style.transform = orig; }, 150);
+  // Toast message
+  toast.info('Bajaj FinServ registration is coming soon. Please check back later.');
+});
+
+// Form page back → Program selection
 document.getElementById('go-back').addEventListener('click', e => {
   e.preventDefault();
-  formPage.hidden = true;
-  landing.style.display = '';
-  window.scrollTo({ top: 0, behavior: 'instant' });
+  showScreen('program');
 });
 
 // ── Step navigation ────────────────────────────────────────────
