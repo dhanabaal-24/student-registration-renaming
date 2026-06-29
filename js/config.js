@@ -56,7 +56,7 @@ export const DOCUMENT_TYPES = [
     },
     {
         doc_type : 'ration_income',
-        label    : 'Ration Card (Front & Back) or Income Certificate',
+        label    : 'EWS Certificate',
         required : true,
     },
     {
