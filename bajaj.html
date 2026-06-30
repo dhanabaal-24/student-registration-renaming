@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bajaj FinServ Registration — Ma Foi Careers</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/upload.css">
+  <style>
+    /* Bajaj amber accent override for header */
+    .bajaj-header { background: linear-gradient(135deg, #92400e, #b45309); }
+    .bajaj-header .portal-logo__name { color: white; }
+    .step-item.is-active .step-dot,
+    .step-item.is-done .step-dot { background: #b45309; border-color: #b45309; }
+    .step-item.is-active .step-dot { box-shadow: 0 0 0 4px rgba(180,83,9,.18); }
+    .step-item.is-active .step-label { color: #b45309; }
+    .step-item.is-done:not(:last-child)::after { background: #b45309; }
+    .btn-bajaj { background: #b45309; border-color: #b45309; color: white;
+      box-shadow: 0 2px 8px rgba(180,83,9,.25); }
+    .btn-bajaj:hover:not(:disabled) { background: #92400e; border-color: #92400e; }
+    .ff__input:focus,.ff__select:focus,.ff__textarea:focus { border-color: #b45309; box-shadow: 0 0 0 3px rgba(180,83,9,.10); }
+  </style>
+</head>
+<body>
+<div class="portal-wrap">
+
+  <header class="portal-header bajaj-header">
+    <a href="index.html" class="portal-logo">
+      <div class="portal-logo__icon" style="background:rgba(255,255,255,.18)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+          <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+          <line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/>
+        </svg>
+      </div>
+      <div>
+        <span class="portal-logo__name">Bajaj FinServ</span>
+        <span class="portal-logo__sub">Student Registration</span>
+      </div>
+    </a>
+    <div class="portal-header__badge">Gold Loan &amp; Microfinance</div>
+  </header>
+
+  <!-- Top bar -->
+  <div class="form-page__topbar" style="top:56px">
+    <a href="index.html" class="form-page__back">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      Back
+    </a>
+    <span class="form-page__title">Bajaj FinServ — New Registration</span>
+  </div>
+
+  <!-- Step bar -->
+  <div class="step-bar">
+    <div class="step-bar__inner">
+      <div class="step-item is-active" data-step="1">
+        <div class="step-dot" id="dot-1">1</div>
+        <div class="step-label">Personal Details</div>
+      </div>
+      <div class="step-item" data-step="2">
+        <div class="step-dot" id="dot-2">2</div>
+        <div class="step-label">Family &amp; Contact</div>
+      </div>
+      <div class="step-item" data-step="3">
+        <div class="step-dot" id="dot-3">3</div>
+        <div class="step-label">Documents</div>
+      </div>
+      <div class="step-item" data-step="4">
+        <div class="step-dot" id="dot-4">4</div>
+        <div class="step-label">Review &amp; Submit</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-body">
+
+    <!-- STEP 1: Personal Details -->
+    <section id="step-1" aria-label="Step 1">
+      <div class="form-card">
+        <div class="form-card__header">
+          <div class="form-card__icon" style="background:#fff7ed;color:#b45309">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div>
+            <div class="form-card__title">Personal Details</div>
+            <div class="form-card__subtitle">Basic personal information</div>
+          </div>
+        </div>
+        <div class="fg">
+          <div class="ff" id="field-first_name"><label class="ff__label" for="b_first_name">First Name <span class="ff__req">*</span></label><input class="ff__input" type="text" id="b_first_name" placeholder="First name" autocomplete="given-name"><span class="ff__error" id="b_first_name-error"></span></div>
+          <div class="ff" id="field-last_name"><label class="ff__label" for="b_last_name">Last Name <span class="ff__req">*</span></label><input class="ff__input" type="text" id="b_last_name" placeholder="Last name" autocomplete="family-name"><span class="ff__error" id="b_last_name-error"></span></div>
+          <div class="ff" id="field-email"><label class="ff__label" for="b_email">Email Address <span class="ff__req">*</span></label><input class="ff__input" type="email" id="b_email" placeholder="you@example.com" inputmode="email"><span class="ff__error" id="b_email-error"></span></div>
+          <div class="ff" id="field-phone"><label class="ff__label" for="b_phone">Phone Number <span class="ff__req">*</span></label><input class="ff__input" type="tel" id="b_phone" placeholder="10-digit mobile number" inputmode="tel" maxlength="10"><span class="ff__error" id="b_phone-error"></span></div>
+          <div class="ff" id="field-alternate_phone"><label class="ff__label" for="b_alt_phone">Alternate Phone</label><input class="ff__input" type="tel" id="b_alt_phone" placeholder="Alternate mobile number" inputmode="tel" maxlength="10"><span class="ff__error" id="b_alt_phone-error"></span></div>
+          <div class="ff" id="field-gender"><label class="ff__label" for="b_gender">Gender <span class="ff__req">*</span></label><select class="ff__select" id="b_gender"><option value="">Select Gender</option><option>Male</option><option>Female</option><option>Other</option><option>Prefer not to say</option></select><span class="ff__error" id="b_gender-error"></span></div>
+          <div class="ff" id="field-dob"><label class="ff__label" for="b_dob">Date of Birth <span class="ff__req">*</span></label><input class="ff__input" type="date" id="b_dob"><span class="ff__error" id="b_dob-error"></span></div>
+          <div class="ff" id="field-aadhaar"><label class="ff__label" for="b_aadhaar">Aadhaar Number <span class="ff__req">*</span></label><input class="ff__input" type="text" id="b_aadhaar" placeholder="12-digit Aadhaar" maxlength="12" inputmode="numeric"><span class="ff__error" id="b_aadhaar-error"></span></div>
+          <div class="ff" id="field-course"><label class="ff__label" for="b_course">Course <span class="ff__req">*</span></label><select class="ff__select" id="b_course"><option value="">Select Course</option><option value="Gold Loan">Gold Loan</option><option value="Microfinance">Microfinance</option></select><span class="ff__error" id="b_course-error"></span></div>
+          <div class="ff" id="field-location"><label class="ff__label" for="b_location">Location <span class="ff__req">*</span></label><select class="ff__select" id="b_location"><option value="">Select Location</option><option value="Chennai">Chennai</option><option value="Madurai">Madurai</option><option value="Bangalore">Bangalore</option><option value="Kolkata">Kolkata</option></select><span class="ff__error" id="b_location-error"></span></div>
+          <div class="ff fg--full" id="field-address"><label class="ff__label" for="b_address">Address <span class="ff__req">*</span></label><textarea class="ff__input ff__textarea" id="b_address" placeholder="House No., Street, Area, City" rows="3"></textarea><span class="ff__error" id="b_address-error"></span></div>
+          <div class="ff" id="field-city"><label class="ff__label" for="b_city">City</label><input class="ff__input" type="text" id="b_city" placeholder="City"><span class="ff__error" id="b_city-error"></span></div>
+          <div class="ff" id="field-state"><label class="ff__label" for="b_state">State</label><input class="ff__input" type="text" id="b_state" placeholder="State"><span class="ff__error" id="b_state-error"></span></div>
+          <div class="ff" id="field-pincode"><label class="ff__label" for="b_pincode">PIN Code</label><input class="ff__input" type="text" id="b_pincode" placeholder="6-digit PIN" maxlength="6" inputmode="numeric"><span class="ff__error" id="b_pincode-error"></span></div>
+        </div>
+        <div class="btn-row" style="justify-content:flex-end">
+          <button type="button" class="btn btn-bajaj" id="btn-s1-next">Next <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 2: Family & Contact -->
+    <section id="step-2" hidden aria-label="Step 2">
+      <div class="form-card">
+        <div class="form-card__header">
+          <div class="form-card__icon" style="background:#fff7ed;color:#b45309">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          </div>
+          <div>
+            <div class="form-card__title">Family &amp; Contact Details</div>
+            <div class="form-card__subtitle">Optional family information</div>
+          </div>
+        </div>
+        <div class="fg">
+          <div class="ff"><label class="ff__label" for="b_father_name">Father's Name</label><input class="ff__input" type="text" id="b_father_name" placeholder="Father's full name"></div>
+          <div class="ff"><label class="ff__label" for="b_mother_name">Mother's Name</label><input class="ff__input" type="text" id="b_mother_name" placeholder="Mother's full name"></div>
+          <div class="ff"><label class="ff__label" for="b_father_occ">Father's Occupation</label><input class="ff__input" type="text" id="b_father_occ" placeholder="e.g. Farmer, Employee"></div>
+          <div class="ff"><label class="ff__label" for="b_parent_contact">Parent Contact</label><input class="ff__input" type="tel" id="b_parent_contact" placeholder="Parent's mobile number" inputmode="tel" maxlength="10"></div>
+          <div class="ff"><label class="ff__label" for="b_family_members">Total Family Members</label><input class="ff__input" type="number" id="b_family_members" placeholder="e.g. 4" min="1" max="30"></div>
+          <div class="ff"><label class="ff__label" for="b_family_income">Annual Family Income</label><select class="ff__select" id="b_family_income"><option value="">Select income range</option><option value="Below ₹1,00,000">Below ₹1,00,000</option><option value="₹1,00,000 – ₹2,50,000">₹1,00,000 – ₹2,50,000</option><option value="₹2,50,000 – ₹5,00,000">₹2,50,000 – ₹5,00,000</option><option value="₹5,00,000 – ₹10,00,000">₹5,00,000 – ₹10,00,000</option><option value="Above ₹10,00,000">Above ₹10,00,000</option></select></div>
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-ghost" id="btn-s2-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> Previous</button>
+          <button type="button" class="btn btn-bajaj" id="btn-s2-next">Next <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 3: Documents (No educational docs) -->
+    <section id="step-3" hidden aria-label="Step 3">
+      <div class="form-card">
+        <div class="form-card__header">
+          <div class="form-card__icon" style="background:#fff7ed;color:#b45309">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div>
+            <div class="form-card__title">Document Upload</div>
+            <div class="form-card__subtitle">Upload identity and photo documents only (PDF, JPG, PNG · max 5 MB)</div>
+          </div>
+        </div>
+        <div class="upload-grid-new" id="bajaj-upload-grid"></div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-ghost" id="btn-s3-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> Previous</button>
+          <button type="button" class="btn btn-bajaj" id="btn-s3-next">Review &amp; Submit <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 4: Review & Submit -->
+    <section id="step-4" hidden aria-label="Step 4">
+      <div class="form-card">
+        <div class="form-card__header">
+          <div class="form-card__icon" style="background:#f0fdf4;color:#16a34a">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          </div>
+          <div>
+            <div class="form-card__title">Review Your Information</div>
+            <div class="form-card__subtitle">Please verify all details before submitting</div>
+          </div>
+        </div>
+        <div id="bajaj-review"></div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-ghost" id="btn-s4-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg> Previous</button>
+          <button type="button" class="btn btn-bajaj" id="btn-submit">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            Submit Registration
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /form-body -->
+</div><!-- /portal-wrap -->
+
+<div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+<script type="module">
+'use strict';
+
+import { supabase }  from './js/supabase.js';
+import { toast }     from './js/toast.js';
+import { validateName, validateEmail, validatePhone, validateAadhaar,
+         validateDateOfBirth, validateSelect, validateAddress } from './js/validation.js';
+import {
+  STORAGE_BUCKET, BAJAJ_DOCUMENT_TYPES,
+  PROJECT_BAJAJ, TABLE_STUDENTS, TABLE_REGISTRATION_DOCS
+} from './js/config.js';
+
+// ── Bajaj document types (NO educational docs — from config.js) ─
+const BAJAJ_DOCS = BAJAJ_DOCUMENT_TYPES;
+
+const MAX_SIZE = 5 * 1024 * 1024;
+const ALLOWED_TYPES = ['application/pdf','image/jpeg','image/jpg','image/png'];
+
+// ── Step management ─────────────────────────────────────────────
+let currentStep = 1;
+const STEPS = 4;
+
+function showStep(n) {
+  for (let i = 1; i <= STEPS; i++) {
+    const s = document.getElementById(`step-${i}`);
+    if (s) s.hidden = i !== n;
+  }
+  currentStep = n;
+  updateDots(n);
+  if (n === 4) buildReview();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateDots(active) {
+  document.querySelectorAll('.step-item').forEach((item, i) => {
+    const n = i + 1;
+    const dot = item.querySelector('.step-dot');
+    item.classList.toggle('is-active', n === active);
+    item.classList.toggle('is-done',   n < active);
+    if (n < active) {
+      dot.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+    } else {
+      dot.textContent = n;
+    }
+  });
+}
+
+// ── Document slots ──────────────────────────────────────────────
+const docState = new Map();
+
+function initDocSlots() {
+  const grid = document.getElementById('bajaj-upload-grid');
+  grid.innerHTML = '';
+  docState.clear();
+  BAJAJ_DOCS.forEach(dt => {
+    docState.set(dt.doc_type, { file: null });
+    grid.appendChild(makeSlot(dt));
+  });
+}
+
+function makeSlot(dt) {
+  const wrap = document.createElement('div');
+  wrap.className = 'upload-slot-new';
+  wrap.dataset.docType = dt.doc_type;
+  wrap.innerHTML = `
+    <div class="upload-slot-new__label">${dt.label}${dt.required ? ' <span class="upload-slot-new__req">*</span>' : ''}</div>
+    <div class="upload-slot-new__drop" data-drop role="button" tabindex="0">
+      <svg class="upload-slot-new__icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <p class="upload-slot-new__hint">Drag &amp; drop or click to browse</p>
+      <p class="upload-slot-new__formats">PDF, JPG, PNG up to 5 MB</p>
+    </div>
+    <div class="upload-slot-new__error" data-err></div>
+    <input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" data-input>
+  `;
+  const drop  = wrap.querySelector('[data-drop]');
+  const input = wrap.querySelector('[data-input]');
+  drop.addEventListener('click', () => input.click());
+  drop.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') input.click(); });
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.style.background='var(--accent-light)'; });
+  drop.addEventListener('dragleave', () => { drop.style.background=''; });
+  drop.addEventListener('drop', e => { e.preventDefault(); drop.style.background=''; const f=e.dataTransfer?.files?.[0]; if(f) handleFile(wrap,dt,f); });
+  input.addEventListener('change', e => { const f=e.target.files?.[0]; if(f) handleFile(wrap,dt,f); input.value=''; });
+  return wrap;
+}
+
+function handleFile(wrap, dt, file) {
+  const errEl = wrap.querySelector('[data-err]');
+  errEl.textContent = '';
+  wrap.classList.remove('has-error');
+  if (!ALLOWED_TYPES.includes(file.type)) { errEl.textContent='Invalid file type. Use PDF, JPG, PNG.'; wrap.classList.add('has-error'); return; }
+  if (file.size > MAX_SIZE) { errEl.textContent='File too large. Max 5 MB.'; wrap.classList.add('has-error'); return; }
+  docState.get(dt.doc_type).file = file;
+  wrap.classList.add('has-file');
+  const drop = wrap.querySelector('[data-drop]');
+  drop.innerHTML = `
+    <div class="upload-slot-new__preview">
+      <svg class="upload-slot-new__preview-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span class="upload-slot-new__preview-name" title="${file.name}">${file.name}</span>
+      <button type="button" class="upload-slot-new__remove" aria-label="Remove">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`;
+  drop.querySelector('.upload-slot-new__remove').addEventListener('click', e => {
+    e.stopPropagation();
+    docState.get(dt.doc_type).file = null;
+    wrap.classList.remove('has-file','has-error');
+    drop.innerHTML = `
+      <svg class="upload-slot-new__icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <p class="upload-slot-new__hint">Drag &amp; drop or click to browse</p>
+      <p class="upload-slot-new__formats">PDF, JPG, PNG up to 5 MB</p>`;
+    drop.addEventListener('click', () => wrap.querySelector('[data-input]').click());
+  });
+}
+
+// ── Validation helpers ──────────────────────────────────────────
+function v(id) { return document.getElementById(id)?.value?.trim() || ''; }
+
+function setErr(fieldId, msg) {
+  const wrap = document.getElementById(`field-${fieldId}`);
+  const errEl = document.getElementById(`b_${fieldId}-error`) || (wrap?.querySelector('[id$="-error"]'));
+  wrap?.classList.toggle('ff--error', !!msg);
+  if (errEl) errEl.textContent = msg || '';
+}
+
+function validateStep1() {
+  let ok = true;
+  const checks = [
+    ['first_name', validateName(v('b_first_name'),'First name')],
+    ['last_name',  validateName(v('b_last_name'),'Last name')],
+    ['email',      validateEmail(v('b_email'))],
+    ['phone',      validatePhone(v('b_phone'))],
+    ['gender',     validateSelect(v('b_gender'),'Gender')],
+    ['dob',        validateDateOfBirth(v('b_dob'))],
+    ['aadhaar',    validateAadhaar(v('b_aadhaar'))],
+    ['course',     validateSelect(v('b_course'),'Course')],
+    ['location',   validateSelect(v('b_location'),'Location')],
+    ['address',    validateAddress(v('b_address'))],
+  ];
+  checks.forEach(([fid, res]) => {
+    if (res && res.valid === false) { setErr(fid, res.message); ok = false; }
+    else setErr(fid, '');
+  });
+  return ok;
+}
+
+function validateStep3() {
+  let ok = true;
+  BAJAJ_DOCS.forEach(dt => {
+    if (dt.required && !docState.get(dt.doc_type)?.file) {
+      const slot = document.querySelector(`[data-doc-type="${dt.doc_type}"]`);
+      if (slot) { slot.classList.add('has-error'); slot.querySelector('[data-err]').textContent = `${dt.label} is required.`; }
+      ok = false;
+    }
+  });
+  if (!ok) toast.error('Please upload all required documents.');
+  return ok;
+}
+
+// ── Review ──────────────────────────────────────────────────────
+function buildReview() {
+  const esc = s => { const d=document.createElement('div'); d.textContent=String(s||'—'); return d.innerHTML; };
+  const row = (k,val) => val ? `<tr><th>${k}</th><td>${esc(val)}</td></tr>` : '';
+  document.getElementById('bajaj-review').innerHTML = `
+    <div class="review-section">
+      <div class="review-section__title">Personal Details <span class="review-edit" onclick="showStep(1)">Edit</span></div>
+      <table class="review-table">
+        ${row('Full Name', `${v('b_first_name')} ${v('b_last_name')}`)}
+        ${row('Email', v('b_email'))} ${row('Phone', v('b_phone'))}
+        ${row('Gender', v('b_gender'))} ${row('Date of Birth', v('b_dob'))}
+        ${row('Aadhaar', 'XXXX XXXX '+v('b_aadhaar').slice(-4))}
+        ${row('Course', v('b_course'))} ${row('Location', v('b_location'))}
+        ${row('Address', v('b_address'))}
+        ${row('City', v('b_city'))} ${row('State', v('b_state'))} ${row('PIN', v('b_pincode'))}
+      </table>
+    </div>
+    <div class="review-section">
+      <div class="review-section__title">Family Details <span class="review-edit" onclick="showStep(2)">Edit</span></div>
+      <table class="review-table">
+        ${row("Father's Name", v('b_father_name'))} ${row("Mother's Name", v('b_mother_name'))}
+        ${row("Father's Occupation", v('b_father_occ'))} ${row('Parent Contact', v('b_parent_contact'))}
+        ${row('Family Members', v('b_family_members'))} ${row('Annual Income', v('b_family_income'))}
+      </table>
+    </div>
+    <div class="review-section">
+      <div class="review-section__title">Documents <span class="review-edit" onclick="showStep(3)">Edit</span></div>
+      <table class="review-table">
+        ${BAJAJ_DOCS.map(dt => {
+          const has = docState.get(dt.doc_type)?.file;
+          return `<tr><th>${dt.label}</th><td style="color:${has?'#16a34a':'#dc2626'}">${has?'✓ Ready':'⚠ Missing'}</td></tr>`;
+        }).join('')}
+      </table>
+    </div>`;
+}
+
+// ── Navigation buttons ──────────────────────────────────────────
+document.getElementById('btn-s1-next').addEventListener('click', () => { if (validateStep1()) showStep(2); else toast.error('Please fix errors before continuing.'); });
+document.getElementById('btn-s2-back').addEventListener('click', () => showStep(1));
+document.getElementById('btn-s2-next').addEventListener('click', () => showStep(3));
+document.getElementById('btn-s3-back').addEventListener('click', () => showStep(2));
+document.getElementById('btn-s3-next').addEventListener('click', () => { if (validateStep3()) showStep(4); });
+document.getElementById('btn-s4-back').addEventListener('click', () => showStep(3));
+
+// ── Submit ──────────────────────────────────────────────────────
+document.getElementById('btn-submit').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-spinner"></span> Saving…';
+
+  try {
+    // 1. Resolve project/program/location lookup IDs
+    toast.info('Preparing registration…');
+    const { data: project, error: pErr } = await supabase
+      .from('projects').select('id').eq('code', PROJECT_BAJAJ).single();
+    if (pErr || !project) throw new Error('Could not resolve Bajaj project. Has schema_v4 been run?');
+
+    const { data: program, error: prErr } = await supabase
+      .from('programs').select('id').eq('project_id', project.id).eq('name', v('b_course')).single();
+    if (prErr || !program) throw new Error(`Could not resolve course "${v('b_course')}".`);
+
+    const { data: location, error: lErr } = await supabase
+      .from('locations').select('id').eq('project_id', project.id).eq('name', v('b_location')).single();
+    if (lErr || !location) throw new Error(`Could not resolve location "${v('b_location')}".`);
+
+    // 2. Insert into students_v2 (no Ma Foi ID for Bajaj)
+    toast.info('Saving registration…');
+    const fullName = `${v('b_first_name')} ${v('b_last_name')}`;
+    const { data: student, error: sErr } = await supabase.from(TABLE_STUDENTS).insert([{
+      project_id:           project.id,
+      program_id:           program.id,
+      location_id:          location.id,
+      ma_foi_id:            null,
+      first_name:           v('b_first_name'),
+      last_name:            v('b_last_name'),
+      full_name:            fullName,
+      email:                v('b_email').toLowerCase(),
+      phone:                v('b_phone'),
+      alternate_phone:      v('b_alt_phone') || null,
+      gender:               v('b_gender'),
+      date_of_birth:        v('b_dob'),
+      aadhaar_number:       v('b_aadhaar'),
+      address:              v('b_address'),
+      city:                 v('b_city') || null,
+      state:                v('b_state') || null,
+      pincode:              v('b_pincode') || null,
+      father_name:          v('b_father_name') || null,
+      mother_name:          v('b_mother_name') || null,
+      father_occupation:    v('b_father_occ') || null,
+      parent_contact:       v('b_parent_contact') || null,
+      total_family_members: v('b_family_members') ? parseInt(v('b_family_members')) : null,
+      annual_family_income: v('b_family_income') || null,
+      registration_status:  'registered',
+      placement_status:     'pending',
+    }]).select('id').single();
+    if (sErr) throw new Error('Registration save failed: ' + sErr.message);
+
+    const studentId = student.id;
+    // Use short reference from UUID for folder naming (Bajaj has no Ma Foi ID)
+    const refCode    = studentId.replace(/-/g,'').slice(0,8).toUpperCase();
+
+    // 3. Upload documents (named: DocLabel_StudentName — no batch yet)
+    toast.info('Uploading documents…');
+    const uploadFailures = [];
+    for (const dt of BAJAJ_DOCS) {
+      const state = docState.get(dt.doc_type);
+      if (!state?.file) continue;
+      const ext      = state.file.name.slice(state.file.name.lastIndexOf('.'));
+      const fileName = `${dt.label}_${fullName}${ext}`;
+      const path     = `bajaj/${refCode}/${fileName}`;
+      const { error: upErr } = await supabase.storage.from(STORAGE_BUCKET).upload(path, state.file, { upsert: true, contentType: state.file.type });
+      if (upErr) {
+        console.error('[Bajaj] Upload failed for', dt.label, upErr);
+        uploadFailures.push(dt.label);
+        continue;
+      }
+      const { data: { publicUrl } } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+      const { error: rowErr } = await supabase.from(TABLE_REGISTRATION_DOCS).insert([{
+        student_id:    studentId,
+        doc_type:      dt.doc_type,
+        doc_label:     dt.label,
+        file_name:     fileName,
+        storage_path:  path,
+        public_url:    publicUrl
+      }]);
+      if (rowErr) {
+        console.error('[Bajaj] Document row insert failed for', dt.label, rowErr);
+        uploadFailures.push(dt.label);
+      }
+    }
+
+    if (uploadFailures.length > 0) {
+      toast.error(`These documents failed to upload: ${uploadFailures.join(', ')}. Your registration is saved — please re-upload via Edit Registration.`);
+    }
+
+    // 4. Redirect to success page with type=bajaj (no Ma Foi ID shown)
+    try { sessionStorage.setItem('mafoi_reg', JSON.stringify({ fullName, type: 'bajaj' })); } catch(_){}
+    const p = new URLSearchParams({ name: fullName, type: 'bajaj' });
+    window.location.href = 'success.html?' + p.toString();
+
+  } catch (err) {
+    console.error('[Bajaj] Submit error:', err);
+    toast.error(err.message || 'Submission failed. Please try again.');
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> Submit Registration';
+  }
+});
+
+// ── Init ────────────────────────────────────────────────────────
+initDocSlots();
+showStep(1);
+</script>
+</body>
+</html>

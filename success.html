@@ -445,6 +445,7 @@
 
 import { Confetti } from './js/confetti.js';
 import { supabase } from './js/supabase.js';
+import { VIEW_STUDENT_FULL, TABLE_REGISTRATION_DOCS } from './js/config.js';
 
 // ── Read registration data ─────────────────────────────────────
 const params  = new URLSearchParams(window.location.search);
@@ -452,10 +453,22 @@ let maFoiId  = params.get('id')?.trim().toUpperCase() || null;
 let fullName = params.get('name')?.trim() || null;
 let regType  = params.get('type') || 'new';
 
-if (!maFoiId) {
+if (!maFoiId && regType !== 'bajaj' && regType !== 'bajaj-update') {
   try {
     const s = JSON.parse(sessionStorage.getItem('mafoi_reg') || 'null');
     if (s) { maFoiId = s.maFoiId; fullName = s.fullName; regType = s.type || 'new'; }
+  } catch(_) {}
+}
+
+// Bajaj registration/update — read from sessionStorage if params incomplete
+if (regType === 'bajaj' || regType === 'bajaj-update' ||
+    params.get('type') === 'bajaj' || params.get('type') === 'bajaj-update') {
+  try {
+    const s = JSON.parse(sessionStorage.getItem('mafoi_reg') || 'null');
+    if (s?.type === 'bajaj' || s?.type === 'bajaj-update') {
+      fullName = fullName || s.fullName;
+      regType  = s.type;
+    }
   } catch(_) {}
 }
 
@@ -464,7 +477,73 @@ const card = document.getElementById('card');
 // ════════════════════════════════════════════════════
 // ERROR STATE
 // ════════════════════════════════════════════════════
-if (!maFoiId) {
+// ── BAJAJ SUCCESS / UPDATE — no Ma Foi ID shown ──────────────
+if (regType === 'bajaj' || regType === 'bajaj-update') {
+  const isBajajUpdate = regType === 'bajaj-update';
+  const displayName   = fullName || 'Student';
+  const bHeading       = isBajajUpdate ? 'Registration Updated!' : 'Registration Successful!';
+  const bSub           = isBajajUpdate
+    ? `Thank you, <strong>${esc(displayName)}</strong>.<br>Your Bajaj FinServ registration has been updated successfully.`
+    : `Thank you, <strong>${esc(displayName)}</strong>.<br>Your Bajaj FinServ registration has been submitted successfully.<br>Our team will contact you shortly.`;
+
+  document.getElementById('header-badge').textContent = 'Bajaj FinServ';
+  document.getElementById('header-badge').style.display = '';
+  card.innerHTML = `
+    <!-- Tick icon -->
+    <div class="tick-wrap">
+      <div class="tick-bg" style="background:linear-gradient(135deg,#92400e,#b45309)">
+        <svg class="tick-svg" viewBox="0 0 40 40">
+          <path class="tick-path" d="M8 20 L17 29 L32 13"/>
+        </svg>
+      </div>
+      <div class="tick-ring" style="border-color:rgba(180,83,9,.35)"></div>
+    </div>
+
+    <h1 class="s-title">${bHeading}</h1>
+    <p class="s-sub">
+      ${bSub}
+    </p>
+
+    <div class="s-divider"></div>
+
+    <!-- What happens next -->
+    <div class="next-box">
+      <div class="next-title">What happens next?</div>
+      <div class="next-item">
+        <div class="next-icon" style="background:#b45309">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <span>A Ma Foi representative will contact you within 2–3 working days.</span>
+      </div>
+      <div class="next-item">
+        <div class="next-icon" style="background:#b45309">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <span>Keep your Aadhaar card and documents ready for verification.</span>
+      </div>
+      <div class="next-item">
+        <div class="next-icon" style="background:#b45309">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <span>You will be notified once you are assigned to a batch.</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="action-group">
+      <div class="btn-row-2">
+        <a href="index.html" class="btn-sec">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Return to Home
+        </a>
+      </div>
+    </div>
+  `;
+  triggerCard();
+  try { sessionStorage.removeItem('mafoi_reg'); } catch(_) {}
+
+// ── ERROR — missing Ma Foi ID for Nasscom ─────────────────────
+} else if (!maFoiId) {
   card.innerHTML = `
     <div class="err-state">
       <div class="err-icon">
@@ -485,7 +564,7 @@ if (!maFoiId) {
   try { sessionStorage.removeItem('mafoi_reg'); } catch(_) {}
 
 // ════════════════════════════════════════════════════
-// SUCCESS STATE
+// NASSCOM SUCCESS STATE — shows Ma Foi ID
 // ════════════════════════════════════════════════════
 } else {
   const isUpdate = regType === 'update';
@@ -602,11 +681,23 @@ if (!maFoiId) {
     try {
       let student = null, documents = [];
       try {
-        const { data: s } = await supabase.from('students').select('*').eq('ma_foi_id', maFoiId).single();
+        const { data: s, error: sErr } = await supabase
+          .from(VIEW_STUDENT_FULL)
+          .select('*')
+          .eq('ma_foi_id', maFoiId)
+          .single();
+        if (sErr) console.error('[PDF] Could not load student:', sErr);
         student = s;
-        const { data: d } = await supabase.from('documents').select('*').eq('ma_foi_id', maFoiId);
-        documents = d || [];
-      } catch(e) { console.warn('Partial data only:', e); }
+
+        if (student?.id) {
+          const { data: d, error: dErr } = await supabase
+            .from(TABLE_REGISTRATION_DOCS)
+            .select('*')
+            .eq('student_id', student.id);
+          if (dErr) console.error('[PDF] Could not load documents:', dErr);
+          documents = d || [];
+        }
+      } catch(e) { console.error('[PDF] Data fetch failed:', e); }
       generatePDF(maFoiId, fullName, student, documents);
     } catch(e) {
       console.error(e);
@@ -652,7 +743,7 @@ function generatePDF(maFoiId, fullName, student, documents) {
     {key:'12th_marksheet',label:'12th Marksheet'},
     {key:'degree_certificate',label:'6th Sem Marksheet / Degree Certificate'},
     {key:'aadhaar_card',label:'Aadhaar Card'},
-    {key:'ration_income',label:'Ration Card / Income Certificate'},
+    {key:'ews_certificate',label:'EWS Certificate'},
     {key:'signature',label:'Signature'},
     {key:'passport_photo',label:'Passport Size Photo'},
   ];
@@ -693,12 +784,12 @@ table{width:100%;border-collapse:collapse;font-size:12.5px}
 </div>
 <div class="hdr">
   <div class="logo">Ma Foi<span>.</span>Careers</div>
-  <div class="meta"><strong>Registration Acknowledgement</strong>Date: ${today}<br>Program: ${esc(student?.program||'—')} · ${esc(student?.location||'—')}</div>
+  <div class="meta"><strong>Registration Acknowledgement</strong>Date: ${today}<br>Program: ${esc(student?.program_name||'—')} · ${esc(student?.location_name||'—')}</div>
 </div>
 <div class="doc-title">REGISTRATION ACKNOWLEDGEMENT CERTIFICATE</div>
 <div class="id-block">
   <div><div class="id-lbl">Ma Foi ID</div><div class="id-val">${esc(maFoiId)}</div></div>
-  <div class="id-right">Batch: ${esc(student?.batch_id||'—')}<br>${esc(student?.program||'')} Program<br>${esc(student?.location||'')} Centre</div>
+  <div class="id-right">Batch: ${esc(student?.batch_code||'Not assigned')}<br>${esc(student?.program_name||'')} Program<br>${esc(student?.location_name||'')} Centre</div>
 </div>
 <div class="section"><div class="sec-title">Personal Information</div><table>
   ${row('Full Name', fullName||(student?`${student.first_name} ${student.last_name}`:null))}
@@ -708,7 +799,7 @@ table{width:100%;border-collapse:collapse;font-size:12.5px}
   ${row('Educational Qualification', student?.educational_qualification)}${row('Graduation Year', student?.graduation_year)}
 </table></div>
 <div class="section"><div class="sec-title">Program Enrollment</div><table>
-  ${row('Program', student?.program)}${row('Centre Location', student?.location)}${row('Batch ID', student?.batch_id)}
+  ${row('Project', student?.project_name)}${row('Program', student?.program_name)}${row('Centre Location', student?.location_name)}${row('Batch', student?.batch_code || 'Not yet assigned')}
 </table></div>
 <div class="section"><div class="sec-title">Family Background</div><table>
   ${row("Father's Name", student?.father_name)}${row("Mother's Name", student?.mother_name)}

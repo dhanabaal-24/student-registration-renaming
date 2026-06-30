@@ -22,21 +22,21 @@ import { buildFilename, getExtension, buildStoragePath } from './utils.js';
  * Reports progress via the onProgress callback.
  *
  * @param {Object}   opts
- * @param {File}     opts.file          - The raw File object
- * @param {string}   opts.maFoiId       - e.g. "BLR001"
- * @param {string}   opts.batchId       - e.g. "B01"
+ * @param {string|null} opts.maFoiId    - e.g. "BLR001", or null for Bajaj
+ * @param {string}   opts.folderName    - storage folder (maFoiId or ref code)
  * @param {string}   opts.docLabel      - e.g. "10th Marksheet"
  * @param {string}   opts.fullName      - e.g. "Dhanabal Kumar"
+ * @param {File}     opts.file          - The raw File object
  * @param {Function} [opts.onProgress]  - (percent: number) => void
  *
  * @returns {Promise<{ storagePath: string, publicUrl: string, fileName: string }>}
  * @throws {Error}
  */
-export async function uploadDocument({ file, maFoiId, batchId, docLabel, fullName, onProgress }) {
+export async function uploadDocument({ file, maFoiId, folderName, docLabel, fullName, onProgress }) {
     // 1. Build canonical filename
     const ext      = getExtension(file);
-    const fileName = buildFilename(maFoiId, batchId, docLabel, fullName, ext);
-    const path     = buildStoragePath(maFoiId, fileName);
+    const fileName = buildFilename(maFoiId, docLabel, fullName, ext);
+    const path     = buildStoragePath(folderName || maFoiId, fileName);
 
     // 2. Upload to Supabase Storage
     // Supabase JS v2 does not natively support upload progress in the browser,
@@ -154,11 +154,18 @@ function uploadWithProgress({ file, path, fileName, onProgress }) {
 /**
  * Fallback: Standard Supabase upload (no progress) used when XHR approach
  * has CORS issues. Tries XHR first, falls back to SDK.
+ *
+ * @param {Object}   opts
+ * @param {File}     opts.file
+ * @param {string|null} opts.maFoiId    - e.g. "BLR001", or null for Bajaj
+ * @param {string}   opts.folderName    - storage folder (maFoiId or ref code)
+ * @param {string}   opts.docLabel
+ * @param {string}   opts.fullName
  */
-export async function uploadDocumentSDK({ file, maFoiId, batchId, docLabel, fullName }) {
+export async function uploadDocumentSDK({ file, maFoiId, folderName, docLabel, fullName }) {
     const ext      = getExtension(file);
-    const fileName = buildFilename(maFoiId, batchId, docLabel, fullName, ext);
-    const path     = buildStoragePath(maFoiId, fileName);
+    const fileName = buildFilename(maFoiId, docLabel, fullName, ext);
+    const path     = buildStoragePath(folderName || maFoiId, fileName);
 
     const { data, error } = await supabase.storage
         .from(STORAGE_BUCKET)

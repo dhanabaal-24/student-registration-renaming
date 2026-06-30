@@ -27,9 +27,10 @@ export const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 export const STORAGE_BUCKET = 'documents';
 
 // ─────────────────────────────────────────────────────────────
-// DOCUMENT TYPES
+// DOCUMENT TYPES — NASSCOM (full educational document set)
 // Order matters — displayed in this order in the upload section.
 // doc_type : machine key (stored in DB, used in filenames)
+//            must match the CHECK constraint on registration_documents
 // label    : human-readable name shown in UI and filenames
 // required : whether submission can proceed without this file
 // ─────────────────────────────────────────────────────────────
@@ -55,7 +56,7 @@ export const DOCUMENT_TYPES = [
         required : true,
     },
     {
-        doc_type : 'ration_income',
+        doc_type : 'ews_certificate',
         label    : 'EWS Certificate',
         required : true,
     },
@@ -72,6 +73,27 @@ export const DOCUMENT_TYPES = [
 ];
 
 // ─────────────────────────────────────────────────────────────
+// DOCUMENT TYPES — BAJAJ (no educational documents at all)
+// ─────────────────────────────────────────────────────────────
+export const BAJAJ_DOCUMENT_TYPES = [
+    {
+        doc_type : 'aadhaar_card',
+        label    : 'Aadhaar Card',
+        required : true,
+    },
+    {
+        doc_type : 'passport_photo',
+        label    : 'Passport Size Photo',
+        required : true,
+    },
+    {
+        doc_type : 'signature',
+        label    : 'Signature',
+        required : true,
+    },
+];
+
+// ─────────────────────────────────────────────────────────────
 // VALIDATION CONSTANTS
 // ─────────────────────────────────────────────────────────────
 export const MAX_FILE_SIZE_BYTES  = 5 * 1024 * 1024; // 5 MB
@@ -82,11 +104,17 @@ export const GRADUATION_YEAR_MIN  = 1990;
 export const GRADUATION_YEAR_MAX  = 2035;
 
 // ─────────────────────────────────────────────────────────────
-// PROGRAM OPTIONS
+// PROGRAM OPTIONS — NASSCOM
 // ─────────────────────────────────────────────────────────────
 export const PROGRAMS   = ['BFSI', 'Data Analytics'];
 export const LOCATIONS  = ['Bangalore', 'Kolkata'];
 export const GENDERS    = ['Male', 'Female', 'Other', 'Prefer not to say'];
+
+// ─────────────────────────────────────────────────────────────
+// PROGRAM OPTIONS — BAJAJ FINSERV
+// ─────────────────────────────────────────────────────────────
+export const BAJAJ_PROGRAMS   = ['Gold Loan', 'Microfinance'];
+export const BAJAJ_LOCATIONS  = ['Chennai', 'Madurai', 'Bangalore', 'Kolkata'];
 
 export const QUALIFICATIONS = [
     'High School (10th)',
@@ -109,3 +137,23 @@ export const INCOME_RANGES = [
     '₹5,00,000 – ₹10,00,000',
     'Above ₹10,00,000',
 ];
+
+// ─────────────────────────────────────────────────────────────
+// V2 SCHEMA — TABLE & VIEW NAMES
+// Used by all new code (registration, edit, admin) going forward.
+// ─────────────────────────────────────────────────────────────
+export const TABLE_STUDENTS              = 'students_v2';
+export const TABLE_REGISTRATION_DOCS     = 'registration_documents';
+export const TABLE_BATCHES               = 'batches_v2';
+export const TABLE_BATCH_ASSIGNMENTS     = 'batch_assignments_v2';
+export const TABLE_BATCH_HISTORY         = 'batch_history';
+export const TABLE_PLACEMENTS            = 'placements_v2';
+export const TABLE_PLACEMENT_DOCS        = 'placement_documents';
+export const TABLE_PAYSLIPS              = 'payslips_v2';
+export const VIEW_STUDENT_FULL           = 'v_student_full';
+export const VIEW_BATCH_FULL             = 'v_batch_full';
+export const VIEW_DASHBOARD_STATS        = 'v_dashboard_stats';
+
+// Project codes (match `projects.code` in DB)
+export const PROJECT_NASSCOM = 'nasscom';
+export const PROJECT_BAJAJ   = 'bajaj';

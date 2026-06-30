@@ -20,6 +20,9 @@ import { toast } from './toast.js';
 // Map<doc_type, { file: File|null, existingUrl: string|null, existingPath: string|null, existingFileName: string|null }>
 const documentState = new Map();
 
+// Which document type set is currently active (Nasscom vs Bajaj)
+let activeDocTypes = DOCUMENT_TYPES;
+
 // ─────────────────────────────────────────────────────────────
 // INIT
 // ─────────────────────────────────────────────────────────────
@@ -30,13 +33,16 @@ const documentState = new Map();
  *
  * @param {HTMLElement} container
  * @param {Array}       [existingDocs=[]] - from DB documents rows
+ * @param {Array}       [docTypes=DOCUMENT_TYPES] - which doc type set to render
+ *                       (pass BAJAJ_DOCUMENT_TYPES for Bajaj forms)
  */
-export function initDocumentSlots(container, existingDocs = []) {
+export function initDocumentSlots(container, existingDocs = [], docTypes = DOCUMENT_TYPES) {
     documentState.clear();
     container.innerHTML = '';
+    activeDocTypes = docTypes;
 
     // Build initial state
-    for (const docType of DOCUMENT_TYPES) {
+    for (const docType of docTypes) {
         const existing = existingDocs.find(d => d.doc_type === docType.doc_type) || null;
         documentState.set(docType.doc_type, {
             file             : null,
@@ -74,7 +80,7 @@ export function getDocumentState() {
  */
 export function validateAllDocuments() {
     const errors = [];
-    for (const docType of DOCUMENT_TYPES) {
+    for (const docType of activeDocTypes) {
         if (!docType.required) continue;
         const state = documentState.get(docType.doc_type);
         if (!state.file && !state.existingUrl) {
@@ -281,13 +287,13 @@ export function setSlotProgress(docType, percent) {
 function showError(slot, message) {
     const errorEl = slot.querySelector('.upload-slot-new__error');
     if (errorEl) { errorEl.textContent = message; errorEl.style.display = 'block'; }
-    slot.classList.add('upload-slot-new has-error');
+    slot.classList.add('has-error');
 }
 
 function clearError(slot) {
     const errorEl = slot.querySelector('.upload-slot-new__error');
     if (errorEl) { errorEl.textContent = ''; errorEl.style.display = 'none'; }
-    slot.classList.remove('upload-slot-new has-error');
+    slot.classList.remove('has-error');
 }
 
 function setStatus(slot, message, type) {
@@ -301,7 +307,7 @@ function setStatus(slot, message, type) {
  * Mark all slots with missing required docs as error.
  */
 export function highlightMissingDocs() {
-    for (const docType of DOCUMENT_TYPES) {
+    for (const docType of activeDocTypes) {
         if (!docType.required) continue;
         const state = documentState.get(docType.doc_type);
         if (!state.file && !state.existingUrl) {

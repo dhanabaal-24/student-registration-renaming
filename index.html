@@ -27,7 +27,23 @@
         <span class="portal-logo__sub">Student Registration</span>
       </div>
     </a>
-    <div class="portal-header__badge">Skilling & Employability Program for Youth_NF-HDFC</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="portal-header__badge">Batch B01</div>
+      <a href="admin/index.html" style="
+        color:white;font-size:13px;font-weight:600;text-decoration:none;
+        padding:6px 14px;
+        background:rgba(255,255,255,.18);
+        border:1px solid rgba(255,255,255,.3);
+        border-radius:8px;
+        transition:all .15s;
+        display:inline-flex;align-items:center;gap:6px;
+      " onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.18)'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+        Admin Panel
+      </a>
+    </div>
   </header>
 
   <!-- ══════════════════════════════════════
@@ -65,6 +81,28 @@
         <div class="landing-card__link">Update Details <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>
       </a>
     </div>
+
+    <!-- Admin Panel link -->
+    <a href="admin/index.html" style="
+      display:inline-flex;align-items:center;gap:8px;
+      margin-top:28px;
+      font-size:13px;font-weight:600;
+      color:var(--text-muted);
+      text-decoration:none;
+      padding:8px 18px;
+      border:1.5px solid var(--border);
+      border-radius:var(--r-full);
+      background:white;
+      transition:all .18s;
+      box-shadow:var(--shadow-xs);
+    " onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+      Go to Admin Panel
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
+
   </div>
 
   <!-- ══════════════════════════════════════
@@ -155,7 +193,7 @@
           </div>
         </button>
 
-        <!-- Card 2: Bajaj FinServ (Coming Soon) -->
+        <!-- Card 2: Bajaj FinServ -->
         <button id="prog-bajaj" type="button" class="prog-card" style="
           background:var(--surface);
           border:1.5px solid var(--border);
@@ -169,19 +207,11 @@
           font-family:var(--font);
           position:relative;
           overflow:hidden;
-          opacity:.85;
         ">
           <!-- Accent bar top -->
           <div style="position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#b45309,#d97706)"></div>
 
-          <!-- Coming Soon chip -->
-          <div style="
-            position:absolute;top:16px;right:16px;
-            background:#fef3c7;color:#92400e;
-            font-size:10.5px;font-weight:700;
-            padding:3px 9px;border-radius:999px;
-            letter-spacing:.04em;text-transform:uppercase;
-          ">Coming Soon</div>
+
 
           <!-- Icon -->
           <div style="
@@ -213,8 +243,8 @@
             display:inline-flex;align-items:center;gap:5px;
             font-size:12.5px;font-weight:600;color:#d97706;
           ">
-            Coming Soon
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Register Now
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
           </div>
         </button>
 
@@ -580,15 +610,9 @@ document.getElementById('prog-nasscom').addEventListener('click', () => {
   showScreen('form');
 });
 
-// Bajaj card → Coming Soon (no action)
+// Bajaj card → open Bajaj registration form
 document.getElementById('prog-bajaj').addEventListener('click', () => {
-  const btn = document.getElementById('prog-bajaj');
-  // Brief visual feedback, no navigation
-  const orig = btn.style.transform;
-  btn.style.transform = 'scale(0.98)';
-  setTimeout(() => { btn.style.transform = orig; }, 150);
-  // Toast message
-  toast.info('Bajaj FinServ registration is coming soon. Please check back later.');
+  window.location.href = 'bajaj.html';
 });
 
 // Form page back → Program selection
@@ -779,7 +803,7 @@ function buildReview() {
     <div class="review-section">
       <div class="review-section__title">Documents <span class="review-edit" data-goto="3">Edit</span></div>
       <table class="review-table">
-        ${['10th_marksheet','12th_marksheet','degree_certificate','aadhaar_card','ration_income','signature','passport_photo'].map(dt => {
+        ${['10th_marksheet','12th_marksheet','degree_certificate','aadhaar_card','ews_certificate','signature','passport_photo'].map(dt => {
           const slot = document.querySelector(`[data-doc-type="${dt}"]`);
           const ok = slot?.querySelector('.upload-slot-new.has-file, .has-file');
           return `<tr><th>${dt.replace(/_/g,' ')}</th><td style="color:${ok?'#16a34a':'#dc2626'}">${ok?'✓ Ready':'⚠ Missing'}</td></tr>`;

@@ -41,18 +41,18 @@
         </svg>
       </div>
       <div class="verify-card__title">Edit Registration</div>
-      <div class="verify-card__sub">Enter your Ma Foi ID and the phone number you registered with to access and update your details.</div>
+      <div class="verify-card__sub">Enter your registered email address and date of birth to access and update your details.</div>
 
       <form class="verify-card__form" id="verify-form" novalidate>
-        <div class="ff" id="field-verify_ma_foi_id">
-          <label class="ff__label" for="verify_ma_foi_id">Ma Foi ID <span class="ff__req">*</span></label>
-          <input class="ff__input" type="text" id="verify_ma_foi_id" name="verify_ma_foi_id" placeholder="e.g. BLR001 or KOL042" autocomplete="off" spellcheck="false" maxlength="8" aria-required="true">
-          <span class="ff__error" id="verify_ma_foi_id-error"></span>
+        <div class="ff" id="field-verify_email">
+          <label class="ff__label" for="verify_email">Email Address <span class="ff__req">*</span></label>
+          <input class="ff__input" type="email" id="verify_email" name="verify_email" placeholder="you@example.com" autocomplete="email" inputmode="email" aria-required="true">
+          <span class="ff__error" id="verify_email-error"></span>
         </div>
-        <div class="ff" id="field-verify_phone">
-          <label class="ff__label" for="verify_phone">Registered Phone Number <span class="ff__req">*</span></label>
-          <input class="ff__input" type="tel" id="verify_phone" name="verify_phone" placeholder="10-digit mobile number" inputmode="tel" autocomplete="tel" aria-required="true">
-          <span class="ff__error" id="verify_phone-error"></span>
+        <div class="ff" id="field-verify_dob">
+          <label class="ff__label" for="verify_dob">Date of Birth <span class="ff__req">*</span></label>
+          <input class="ff__input" type="date" id="verify_dob" name="verify_dob" autocomplete="bday" aria-required="true">
+          <span class="ff__error" id="verify_dob-error"></span>
         </div>
 
         <div class="err-banner" id="verify-error-banner" hidden></div>
@@ -263,7 +263,8 @@
 <script type="module">
 'use strict';
 
-import { PROGRAMS, LOCATIONS, GENDERS, QUALIFICATIONS, INCOME_RANGES } from './js/config.js';
+import { PROGRAMS, LOCATIONS, GENDERS, QUALIFICATIONS, INCOME_RANGES,
+         PROJECT_NASSCOM, BAJAJ_DOCUMENT_TYPES } from './js/config.js';
 import { ToastManager }               from './js/toast.js';
 import { verifyAndLoad, submitUpdate } from './js/edit.js';
 import { initDocumentSlots }           from './js/documents.js';
@@ -273,8 +274,9 @@ import {
 } from './js/validation.js';
 
 const toast = new ToastManager();
-let currentStudentId = null;
-let currentMaFoiId   = null;
+let currentStudentId   = null;
+let currentMaFoiId     = null;  // null for Bajaj students
+let currentProjectCode = null;
 
 // Pre-populate selects
 populateAllSelects();
@@ -306,8 +308,9 @@ function setState(state, payload) {
       hide(verifyGate); show(editPhase);
       setBtn(false, 'Verify &amp; Continue');
       hideBanner();
-      // Show header badge
-      document.getElementById('header-ma-foi-id').textContent = payload.student.ma_foi_id;
+      // Show header badge — Ma Foi ID for Nasscom, project name for Bajaj
+      const badgeText = payload.student.ma_foi_id || payload.student.project_name || 'Verified';
+      document.getElementById('header-ma-foi-id').textContent = badgeText;
       document.getElementById('header-badge').style.display = '';
       populateForm(payload.student, payload.documents);
       requestAnimationFrame(() => {
@@ -328,21 +331,29 @@ verifyForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   clearFieldErrors();
 
-  const maFoiId = document.getElementById('verify_ma_foi_id').value.trim().toUpperCase();
-  const phone   = document.getElementById('verify_phone').value.trim();
+  const email = document.getElementById('verify_email').value.trim();
+  const dob   = document.getElementById('verify_dob').value.trim();
 
   let hasError = false;
-  if (!maFoiId) { setFieldError('verify_ma_foi_id', 'Please enter your Ma Foi ID.'); hasError = true; }
-  else if (!/^(BLR|KOL)\d{3}$/i.test(maFoiId)) { setFieldError('verify_ma_foi_id', 'ID must be in format BLR001 or KOL001.'); hasError = true; }
-  if (!phone) { setFieldError('verify_phone', 'Please enter your registered phone number.'); hasError = true; }
-  else if (phone.replace(/\D/g,'').length < 10) { setFieldError('verify_phone', 'Please enter a valid 10-digit phone number.'); hasError = true; }
+  if (!email) {
+    setFieldError('verify_email', 'Please enter your email address.');
+    hasError = true;
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    setFieldError('verify_email', 'Please enter a valid email address.');
+    hasError = true;
+  }
+  if (!dob) {
+    setFieldError('verify_dob', 'Please enter your date of birth.');
+    hasError = true;
+  }
   if (hasError) return;
 
   setState('verifying');
   try {
-    const { student, documents } = await verifyAndLoad(maFoiId, phone);
-    currentStudentId = student.id;
-    currentMaFoiId   = student.ma_foi_id;
+    const { student, documents, projectCode } = await verifyAndLoad(email, dob);
+    currentStudentId   = student.id;
+    currentMaFoiId      = student.ma_foi_id || null;
+    currentProjectCode = projectCode;
     setState('success', { student, documents });
   } catch (err) {
     setState('error', { message: err.message || 'Verification failed. Please check your details.' });
@@ -361,7 +372,22 @@ function populateForm(student, documents) {
   setV('graduation_year', student.graduation_year != null ? String(student.graduation_year) : '');
   setSel('gender', student.gender);
   setSel('educational_qualification', student.educational_qualification);
-  setSel('program', student.program);       setSel('location', student.location);
+
+  // Program/Location are read-only post-registration (FK-based in V2 schema).
+  // Display as disabled text instead of editable selects.
+  const progEl = document.getElementById('program');
+  const locEl  = document.getElementById('location');
+  if (progEl) {
+    progEl.innerHTML = `<option value="${student.program_name}">${student.program_name}</option>`;
+    progEl.value = student.program_name;
+    progEl.disabled = true;
+  }
+  if (locEl) {
+    locEl.innerHTML = `<option value="${student.location_name}">${student.location_name}</option>`;
+    locEl.value = student.location_name;
+    locEl.disabled = true;
+  }
+
   setV('father_name', student.father_name || '');
   setV('mother_name', student.mother_name || '');
   setV('father_occupation', student.father_occupation || '');
@@ -374,7 +400,10 @@ function populateForm(student, documents) {
   }
 
   renderExistingDocs(documents);
-  initDocumentSlots(document.getElementById('document-upload-grid'), documents);
+  const docTypesForProject = currentProjectCode === PROJECT_NASSCOM
+    ? undefined  // default = DOCUMENT_TYPES (Nasscom) inside documents.js
+    : BAJAJ_DOCUMENT_TYPES;
+  initDocumentSlots(document.getElementById('document-upload-grid'), documents, docTypesForProject);
   bindInlineValidation();
 }
 
@@ -434,7 +463,6 @@ function bindInlineValidation() {
     address: validateAddress, aadhaar_number: validateAadhaar,
     educational_qualification: v => validateSelect(v,'Educational qualification'),
     graduation_year: validateGraduationYear,
-    program: v => validateSelect(v,'Program'), location: v => validateSelect(v,'Location'),
   };
   for (const [id, fn] of Object.entries(validators)) {
     const input = document.getElementById(id);
@@ -455,7 +483,7 @@ function bindInlineValidation() {
 
 // ── Submit ────────────────────────────────────────────────────
 document.getElementById('edit-submit-btn').addEventListener('click', async () => {
-  if (!currentStudentId || !currentMaFoiId) { toast.error('Session error. Please refresh and verify again.'); return; }
+  if (!currentStudentId || !currentProjectCode) { toast.error('Session error. Please refresh and verify again.'); return; }
   const v = id => document.getElementById(id)?.value?.trim() || '';
   const studentData = {
     first_name: v('first_name'), last_name: v('last_name'),
@@ -463,7 +491,7 @@ document.getElementById('edit-submit-btn').addEventListener('click', async () =>
     gender: v('gender'), address: v('address'),
     date_of_birth: v('date_of_birth'), aadhaar_number: v('aadhaar_number').replace(/\D/g,''),
     educational_qualification: v('educational_qualification'),
-    graduation_year: v('graduation_year'), program: v('program'), location: v('location'),
+    graduation_year: v('graduation_year'),
   };
   const familyData = {
     father_name: v('father_name'), mother_name: v('mother_name'),
@@ -471,7 +499,7 @@ document.getElementById('edit-submit-btn').addEventListener('click', async () =>
     total_family_members: v('total_family_members'), annual_family_income: v('annual_family_income'),
     father_aadhaar_first3: v('father_aadhaar_first3'), father_aadhaar_last3: v('father_aadhaar_last3'),
   };
-  await submitUpdate(currentStudentId, currentMaFoiId, studentData, familyData, document.getElementById('edit-submit-btn'));
+  await submitUpdate(currentStudentId, currentMaFoiId, currentProjectCode, studentData, familyData, document.getElementById('edit-submit-btn'));
 });
 
 // ── Select population ─────────────────────────────────────────
@@ -505,7 +533,7 @@ function showBanner(msg) {
 function hideBanner() { errBanner.hidden = true; errBanner.style.display = 'none'; }
 
 function clearFieldErrors() {
-  ['verify_ma_foi_id','verify_phone'].forEach(id => {
+  ['verify_email','verify_dob'].forEach(id => {
     document.getElementById(`field-${id}`)?.classList.remove('ff--error');
     const e = document.getElementById(`${id}-error`); if (e) e.textContent = '';
   });

@@ -20,3 +20,5 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
         autoRefreshToken: false,
     },
 });
+
+console.log('[Supabase] Client initialized with URL:', SUPABASE_URL);

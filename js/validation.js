@@ -206,11 +206,30 @@ export function validateStudentSection(data) {
         { field: 'address',                     result: validateAddress(data.address) },
         { field: 'date_of_birth',               result: validateDateOfBirth(data.date_of_birth) },
         { field: 'aadhaar_number',              result: validateAadhaar(data.aadhaar_number) },
-        { field: 'educational_qualification',   result: validateSelect(data.educational_qualification, 'Educational qualification') },
-        { field: 'graduation_year',             result: validateGraduationYear(data.graduation_year) },
-        { field: 'program',                     result: validateSelect(data.program, 'Program') },
-        { field: 'location',                    result: validateSelect(data.location, 'Location') },
     ];
+
+    // Educational qualification / graduation year only apply to Nasscom.
+    // Only validate them if the field was actually included in the
+    // submitted data (i.e. the form collected it). Bajaj's edit form
+    // never includes these keys, and even Nasscom edits should accept
+    // them as optional here since they're nullable in the database.
+    if ('educational_qualification' in data && data.educational_qualification) {
+        checks.push({ field: 'educational_qualification', result: validateSelect(data.educational_qualification, 'Educational qualification') });
+    }
+    if ('graduation_year' in data && data.graduation_year) {
+        checks.push({ field: 'graduation_year', result: validateGraduationYear(data.graduation_year) });
+    }
+
+    // Program/Location are NOT editable post-registration in V2 — they're
+    // foreign keys set at registration time and shown read-only in the
+    // edit form. Only validate them if they were actually submitted
+    // (i.e. some other caller still sends them, e.g. the registration form).
+    if ('program' in data) {
+        checks.push({ field: 'program', result: validateSelect(data.program, 'Program') });
+    }
+    if ('location' in data) {
+        checks.push({ field: 'location', result: validateSelect(data.location, 'Location') });
+    }
 
     for (const { field, result } of checks) {
         if (!result.valid) errors.push({ field, message: result.message });

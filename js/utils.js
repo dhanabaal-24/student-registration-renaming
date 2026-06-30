@@ -20,21 +20,30 @@ export function sanitizeForFilename(str) {
 }
 
 /**
- * Build the canonical filename for a document.
- * Format: MaFoiID_BatchID_DocumentLabel_FullName.ext
+ * Build the canonical filename for a document AT REGISTRATION TIME
+ * (before any batch is assigned).
+ * Format: MaFoiID_DocumentLabel_FullName.ext
  *
- * @param {string} maFoiId   - e.g. "BLR001"
- * @param {string} batchId   - e.g. "B01"
- * @param {string} docLabel  - e.g. "10th Marksheet"
- * @param {string} fullName  - e.g. "Dhanabal Kumar"
- * @param {string} extension - e.g. ".pdf" (with leading dot)
+ * For Nasscom students with a Ma Foi ID:  BLR001_10th Marksheet_Dhanabal D.pdf
+ * For Bajaj students (no Ma Foi ID):      DocumentLabel_FullName.ext (no prefix)
+ *
+ * Once an admin assigns a batch, the admin dashboard renames the file to:
+ *   MaFoiID_BatchCode_DocumentLabel_FullName.ext  (Nasscom)
+ *   BatchCode_DocumentLabel_FullName.ext           (Bajaj)
+ *
+ * @param {string|null} maFoiId   - e.g. "BLR001", or null for Bajaj
+ * @param {string}      docLabel  - e.g. "10th Marksheet"
+ * @param {string}      fullName  - e.g. "Dhanabal Kumar"
+ * @param {string}      extension - e.g. ".pdf" (with leading dot)
  * @returns {string}
  */
-export function buildFilename(maFoiId, batchId, docLabel, fullName, extension) {
-    const safeLabel    = sanitizeForFilename(docLabel);
-    const safeName     = sanitizeForFilename(fullName);
-    const safeExt      = extension.toLowerCase().replace(/[^.a-z0-9]/g, '');
-    return `${maFoiId}_${batchId}_${safeLabel}_${safeName}${safeExt}`;
+export function buildFilename(maFoiId, docLabel, fullName, extension) {
+    const safeLabel = sanitizeForFilename(docLabel);
+    const safeName  = sanitizeForFilename(fullName);
+    const safeExt   = extension.toLowerCase().replace(/[^.a-z0-9]/g, '');
+    return maFoiId
+        ? `${maFoiId}_${safeLabel}_${safeName}${safeExt}`
+        : `${safeLabel}_${safeName}${safeExt}`;
 }
 
 /**
@@ -149,8 +158,9 @@ export function fileToDataURL(file) {
 }
 
 /**
- * Build storage path: documents/BLR001/filename
+ * Build storage path: {folderName}/{filename}
+ * folderName is the Ma Foi ID for Nasscom, or a short ref code for Bajaj.
  */
-export function buildStoragePath(maFoiId, filename) {
-    return `${maFoiId}/${filename}`;
+export function buildStoragePath(folderName, filename) {
+    return `${folderName}/${filename}`;
 }

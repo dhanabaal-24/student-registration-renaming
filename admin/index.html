@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Ma Foi Careers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/theme.css">
+<style>
+/* ════════════════════════════════════════════════════════════
+   ADMIN DASHBOARD V2 — styles
+════════════════════════════════════════════════════════════ */
+body { background: #f4f5f7; }
+
+.admin-wrap   { display: none; min-height: 100vh; }
+.admin-wrap.authenticated { display: block; }
+
+/* ── App shell (sidebar + main column) ─────────────────────── */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  padding: 16px;
+  gap: 16px;
+}
+
+/* ── Sidebar (white, clean, like the reference) ──────────────── */
+.sidebar {
+  width: 236px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.03);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: calc(100vh - 32px);
+  position: sticky;
+  top: 16px;
+  padding: 20px 14px;
+}
+
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px 22px;
+}
+.sidebar__brand-icon {
+  width: 32px; height: 32px;
+  background: var(--primary);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.sidebar__brand-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -.3px;
+}
+
+.sidebar-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 12px;
+  font-size: 13.5px; font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  border: none;
+  border-radius: 10px;
+  transition: all .15s;
+  text-decoration: none;
+  background: none;
+  width: 100%; text-align: left;
+  font-family: var(--font);
+}
+.nav-item:hover { background: #f4f5f7; color: var(--text); }
+.nav-item.active { background: #f4f5f7; color: var(--text); font-weight: 600; }
+.nav-item svg { flex-shrink: 0; }
+
+.sidebar__footer {
+  display: flex; flex-direction: column; gap: 2px;
+  padding-top: 14px;
+  margin-top: 8px;
+  border-top: 1px solid #f0f1f3;
+}
+.sidebar__footer-link {
+  display: flex; align-items: center; gap: 11px;
+  padding: 9px 12px;
+  font-size: 13px; font-weight: 500;
+  color: #9ca3af;
+  text-decoration: none;
+  border-radius: 9px;
+  transition: all .15s;
+  cursor: pointer;
+}
+.sidebar__footer-link:hover { background: #f4f5f7; color: var(--text); }
+.sidebar__footer-link--btn {
+  border: none; background: none; width: 100%; text-align: left;
+  font-family: var(--font);
+}
+
+/* ── Main column ──────────────────────────────────────────────── */
+.main-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Top bar (white card, like reference) ───────────────────── */
+.topbar {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.03);
+  padding: 16px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.topbar__title {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 16px; font-weight: 700; color: var(--text);
+}
+.topbar__title svg { color: #9ca3af; }
+.topbar__user { display: flex; align-items: center; gap: 10px; }
+.topbar__avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
+  flex-shrink: 0;
+}
+.topbar__user-info { text-align: right; }
+.topbar__user-name { font-size: 13.5px; font-weight: 700; color: var(--text); line-height: 1.3; }
+.topbar__user-role { font-size: 11.5px; color: #9ca3af; line-height: 1.3; }
+
+/* ── Main content card ───────────────────────────────────────── */
+.main-content {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.03);
+  padding: 26px 28px;
+  flex: 1;
+  min-width: 0;
+}
+
+.page-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: var(--sp-4); margin-bottom: 22px; flex-wrap: wrap;
+}
+.page-header__title { font-size: 19px; font-weight: 800; color: var(--text); letter-spacing: -.3px; }
+.page-header__sub   { font-size: 13px; color: #9ca3af; margin-top: 3px; }
+
+/* ── Stats cards ─────────────────────────────────────────────── */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px; margin-bottom: 26px;
+}
+.stat-card {
+  background: #f7f8fa; border: 1px solid #f0f1f3; border-radius: 14px;
+  padding: 18px 20px; transition: box-shadow .15s, transform .15s;
+}
+.stat-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.04); transform: translateY(-1px); }
+.stat-card__top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.stat-card__label-top { font-size: 13px; color: #6b7280; font-weight: 500; }
+.stat-card__icon {
+  width: 30px; height: 30px; border-radius: 9px; display: flex;
+  align-items: center; justify-content: center; flex-shrink: 0;
+}
+.stat-card__val   { font-size: 24px; font-weight: 800; color: var(--text); line-height: 1; letter-spacing: -.3px; }
+.stat-card__label { font-size: 11.5px; color: #9ca3af; margin-top: 7px; font-weight: 500; line-height: 1.3; }
+
+/* ── Tab bar ─────────────────────────────────────────────────── */
+.tab-bar {
+  display: flex; gap: 2px; background: #f7f8fa; border: 1px solid #f0f1f3;
+  border-radius: 12px; padding: 3px; margin-bottom: 18px; flex-wrap: wrap;
+}
+.tab-btn {
+  padding: 7px 16px; border-radius: 9px; border: none; font-size: 13px; font-weight: 600;
+  cursor: pointer; background: none; color: #6b7280; font-family: var(--font);
+  transition: all .15s; white-space: nowrap;
+}
+.tab-btn.active { background: white; color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+
+/* ── Table card ──────────────────────────────────────────────── */
+.table-card {
+  background: transparent;
+}
+.table-card__top {
+  padding: 0 0 18px; border-bottom: none;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+}
+.table-card__title { font-size: 17px; font-weight: 700; color: var(--text); }
+.table-card__filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.search-box {
+  display: flex; align-items: center; gap: 8px; background: #f7f8fa;
+  border: 1px solid #f0f1f3; border-radius: 10px; padding: 8px 12px; min-width: 220px;
+}
+.search-box input {
+  border: none; background: none; outline: none; font-size: 13.5px;
+  font-family: var(--font); color: var(--text); width: 100%;
+}
+.search-box input::placeholder { color: #9ca3af; }
+
+.filter-select {
+  padding: 8px 30px 8px 12px; font-size: 13px; font-family: var(--font);
+  border: 1px solid #f0f1f3; border-radius: 10px; background: #f7f8fa;
+  color: var(--text); cursor: pointer; appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 9px center;
+}
+
+/* ── Data table (flat, light-bordered, reference style) ────────── */
+.data-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.data-table th {
+  padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 600;
+  text-transform: none; letter-spacing: 0; color: #9ca3af;
+  background: transparent; border-bottom: 1px solid #f0f1f3; white-space: nowrap;
+  cursor: pointer; user-select: none;
+}
+.data-table th:hover { color: var(--text); }
+.data-table th .sort-arrow { font-size: 9px; margin-left: 3px; opacity: .5; }
+.data-table th.sorted .sort-arrow { opacity: 1; color: var(--accent); }
+.data-table td {
+  padding: 14px 16px; border-bottom: 1px solid #f5f6f8; color: var(--text); vertical-align: middle;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover td { background: #fafbfc; }
+
+/* ── Badges ──────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600;
+  padding: 4px 11px; border-radius: 999px; white-space: nowrap;
+}
+.badge-blue   { background: #eef4ff; color: #3b6ce8; }
+.badge-amber  { background: #fef3e2; color: #c2820a; }
+.badge-green  { background: #e9f9ee; color: #1e9e4f; }
+.badge-gray   { background: #f1f2f4; color: #6b7280; }
+.badge-purple { background: #f3eefe; color: #8b5cf6; }
+.badge-red    { background: #fdecec; color: #e6483f; }
+
+/* ── Buttons used in tables ──────────────────────────────────── */
+.tbl-btn {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600;
+  padding: 6px 12px; border-radius: 8px; border: 1px solid #ececef;
+  background: #fafbfc; color: #6b7280; cursor: pointer; font-family: var(--font);
+  transition: all .15s; white-space: nowrap;
+}
+.tbl-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.tbl-btn--primary { background: var(--accent); color: white; border-color: var(--accent); }
+.tbl-btn--primary:hover { background: var(--accent-hover); color: white; }
+.tbl-btn--danger { color: #e6483f; border-color: #fbdada; background: #fef9f9; }
+.tbl-btn--danger:hover { background: #fdecec; border-color: #e6483f; color: #e6483f; }
+
+/* ── Pagination ──────────────────────────────────────────────── */
+.pagination {
+  display: flex; align-items: center; justify-content: space-between; padding: 16px 0 0;
+  border-top: 1px solid #f0f1f3; font-size: 13px; color: #9ca3af;
+  flex-wrap: wrap; gap: 8px;
+}
+.page-btns { display: flex; gap: 4px; }
+.page-btn {
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; border: 1px solid #ececef; background: #fafbfc;
+  font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--font);
+  transition: all .15s; color: var(--text);
+}
+.page-btn:hover { border-color: var(--accent); color: var(--accent); }
+.page-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+.page-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+.tbl-loading, .tbl-empty { text-align: center; padding: 44px 20px; color: var(--text-muted); }
+.tbl-empty svg { margin: 0 auto 12px; display: block; opacity: .4; }
+
+/* ── Modal ───────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.4); display: flex;
+  align-items: center; justify-content: center; z-index: 1000; padding: 20px;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.modal-overlay.show { opacity: 1; pointer-events: all; }
+.modal {
+  background: white; border-radius: var(--r-xl); width: 100%; max-width: 480px;
+  box-shadow: var(--shadow-xl); transform: translateY(16px) scale(.97); transition: transform .2s;
+  max-height: calc(100vh - 48px); display: flex; flex-direction: column; overflow: hidden;
+}
+.modal-overlay.show .modal { transform: translateY(0) scale(1); }
+.modal__head {
+  padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+.modal__title { font-size: 16px; font-weight: 700; color: var(--text); }
+.modal__close {
+  width: 28px; height: 28px; border-radius: 50%; border: none; background: var(--bg);
+  cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-muted);
+}
+.modal__close:hover { background: var(--border); color: var(--text); }
+.modal__body { padding: 20px 24px; overflow-y: auto; flex: 1; min-height: 0; }
+.modal__foot {
+  padding: 14px 24px 20px; display: flex; gap: 10px; justify-content: flex-end;
+  flex-shrink: 0; border-top: 1px solid var(--border); background: white;
+}
+
+.modal .ff { margin-bottom: 14px; }
+.modal .ff__label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 5px; display: block; }
+.modal .ff__input, .modal .ff__select, .modal .ff__textarea {
+  width: 100%; padding: 9px 12px; font-size: 14px; font-family: var(--font);
+  border: 1.5px solid var(--border); border-radius: var(--r-md); outline: none;
+  background: white; color: var(--text); transition: border-color .15s; appearance: none; -webkit-appearance: none;
+}
+.modal .ff__input:focus, .modal .ff__select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.10); }
+.modal .ff__select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center; padding-right: 34px;
+}
+.modal .ff__error { font-size: 12px; color: var(--danger); margin-top: 4px; min-height: 16px; }
+.modal .ff__hint  { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; }
+.modal .ff__input:disabled, .modal .ff__select:disabled { background: var(--bg); color: var(--text-muted); cursor: not-allowed; }
+
+/* ── Misc ───────────────────────────────────────────────────── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── Login screen ──────────────────────────────────────────── */
+.login-overlay {
+  position: fixed; inset: 0;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #1e40af 100%);
+  display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 24px;
+}
+.login-card {
+  background: white; border-radius: 20px; padding: 40px 36px; width: 100%; max-width: 400px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.35); animation: loginPop .35s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes loginPop { from { opacity:0; transform: scale(.92) translateY(20px); } to { opacity:1; transform: scale(1) translateY(0); } }
+.login-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+.login-logo__icon { width: 42px; height: 42px; background: linear-gradient(135deg, #1e3a5f, #2563eb); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+.login-logo__text { font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: -.3px; line-height: 1.1; }
+.login-logo__sub { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--text-muted); display: block; }
+.login-title { font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -.3px; margin-bottom: 6px; }
+.login-sub { font-size: 13.5px; color: var(--text-secondary); margin-bottom: 28px; line-height: 1.5; }
+.login-field { margin-bottom: 16px; }
+.login-field label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.login-input {
+  width: 100%; padding: 11px 14px; font-size: 14px; font-family: var(--font); color: var(--text);
+  background: white; border: 1.5px solid var(--border); border-radius: 10px; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.login-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+.login-input.error { border-color: var(--danger); background: #fef2f2; }
+.login-error {
+  background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 14px;
+  font-size: 13px; color: var(--danger); margin-bottom: 16px; display: none; align-items: center; gap: 8px;
+}
+.login-error.show { display: flex; }
+.login-btn {
+  width: 100%; padding: 13px; background: linear-gradient(135deg, #1e3a5f, #2563eb);
+  color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700;
+  font-family: var(--font); cursor: pointer; transition: opacity .15s, transform .1s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.login-btn:hover:not(:disabled) { opacity: .92; }
+.login-btn:active { transform: scale(.99); }
+.login-btn:disabled { opacity: .7; cursor: wait; }
+.login-footer { text-align: center; margin-top: 20px; font-size: 12px; color: var(--text-muted); }
+.login-spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.35); border-top-color: white; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.pw-wrap { position: relative; }
+.pw-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px; display: flex; align-items: center; }
+.pw-toggle:hover { color: var(--text); }
+.pw-wrap .login-input { padding-right: 42px; }
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .app-shell { padding: 10px; gap: 10px; }
+  .sidebar { display: none; }
+  .main-content { padding: 18px; }
+  .topbar { padding: 14px 16px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .table-card__top { flex-direction: column; align-items: stretch; }
+  .search-box { min-width: unset; }
+  .topbar__user-info { display: none; }
+}
+.sidebar-toggle {
+  display: none; position: fixed; bottom: 20px; right: 20px; width: 52px; height: 52px;
+  border-radius: 50%; background: var(--primary); color: white; border: none; cursor: pointer;
+  box-shadow: var(--shadow-lg); align-items: center; justify-content: center; z-index: 200;
+}
+@media (max-width: 768px) { .sidebar-toggle { display: flex; } }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════════════════════════ -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div>
+        <div class="login-logo__text">Ma Foi Careers</div>
+        <span class="login-logo__sub">Admin Portal</span>
+      </div>
+    </div>
+    <h1 class="login-title">Welcome back</h1>
+    <p class="login-sub">Sign in with your admin credentials to continue.</p>
+    <div class="login-error" id="login-error">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span id="login-error-text">Invalid username or password.</span>
+    </div>
+    <div class="login-field">
+      <label for="login-username">Username</label>
+      <input class="login-input" type="text" id="login-username" placeholder="Enter admin username" autocomplete="username" spellcheck="false">
+    </div>
+    <div class="login-field">
+      <label for="login-password">Password</label>
+      <div class="pw-wrap">
+        <input class="login-input" type="password" id="login-password" placeholder="Enter password" autocomplete="current-password">
+        <button type="button" class="pw-toggle" id="pw-toggle" aria-label="Toggle password visibility">
+          <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <button class="login-btn" id="login-btn" type="button">Sign In</button>
+    <div class="login-footer">Secured · Ma Foi Careers Admin v2.0</div>
+  </div>
+</div>
+
+<div class="admin-wrap" id="admin-wrap">
+
+  <!-- Header -->
+  <div class="app-shell">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__brand-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <span class="sidebar__brand-name">Ma Foi</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-panel="dashboard">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Overview
+        </button>
+        <button class="nav-item" data-panel="students">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          Students
+        </button>
+        <button class="nav-item" data-panel="batches">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          Batch Management
+        </button>
+        <button class="nav-item" data-panel="placements">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+          Placements
+        </button>
+        <button class="nav-item" data-panel="documents">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Documents
+        </button>
+      </nav>
+
+      <div class="sidebar__footer">
+        <a href="/index.html" class="sidebar__footer-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Back to Portal
+        </a>
+        <button id="btn-logout" class="sidebar__footer-link sidebar__footer-link--btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Log Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main column -->
+    <div class="main-col">
+
+      <!-- Top bar -->
+      <header class="topbar">
+        <div class="topbar__title" id="topbar-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Admin Dashboard
+        </div>
+        <div class="topbar__user">
+          <div class="topbar__avatar" id="admin-username-badge">A</div>
+          <div class="topbar__user-info">
+            <div class="topbar__user-name" id="topbar-username">Admin</div>
+            <div class="topbar__user-role">Super Admin</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main content -->
+      <main class="main-content">
+
+      <!-- ══ PANEL: DASHBOARD ══ -->
+      <div class="panel active" id="panel-dashboard">
+        <div class="page-header">
+          <div>
+            <div class="page-header__title">Dashboard</div>
+            <div class="page-header__sub">Overview of all registrations, batches, and placements</div>
+          </div>
+        </div>
+        <div class="stats-grid" id="dash-stats-grid">
+          <div class="tbl-loading" style="grid-column:1/-1">Loading statistics…</div>
+        </div>
+      </div>
+
+      <!-- ══ PANEL: STUDENTS ══ -->
+      <div class="panel" id="panel-students">
+        <div class="page-header">
+          <div>
+            <div class="page-header__title">Student Management</div>
+            <div class="page-header__sub">Search, filter, view, edit, and manage all registered students</div>
+          </div>
+        </div>
+
+        <div class="tab-bar">
+          <button class="tab-btn active" data-project-tab="all">All Projects</button>
+          <button class="tab-btn" data-project-tab="nasscom">Nasscom – HDFC</button>
+          <button class="tab-btn" data-project-tab="bajaj">Bajaj FinServ</button>
+        </div>
+
+        <div class="table-card">
+          <div class="table-card__top">
+            <div class="table-card__title" id="students-tbl-title">All Students</div>
+            <div class="table-card__filters">
+              <select class="filter-select" id="filter-program"><option value="">All Programs</option></select>
+              <select class="filter-select" id="filter-location"><option value="">All Locations</option></select>
+              <select class="filter-select" id="filter-batch"><option value="">All Batches</option></select>
+              <div class="search-box">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted);flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="student-search" placeholder="Search name, ID, phone, email…">
+              </div>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th data-sort="ma_foi_id">Ma Foi ID <span class="sort-arrow">↕</span></th>
+                  <th data-sort="full_name">Name <span class="sort-arrow">↕</span></th>
+                  <th data-sort="phone">Phone</th>
+                  <th data-sort="project_name">Project <span class="sort-arrow">↕</span></th>
+                  <th data-sort="program_name">Program</th>
+                  <th data-sort="location_name">Location</th>
+                  <th>Batch</th>
+                  <th data-sort="created_at">Registered <span class="sort-arrow">↕</span></th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="students-tbody"><tr><td colspan="9" class="tbl-loading">Loading…</td></tr></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="students-pagination"></div>
+        </div>
+      </div>
+
+      <!-- ══ PANEL: BATCH MANAGEMENT ══ -->
+      <div class="panel" id="panel-batches">
+        <div class="page-header">
+          <div>
+            <div class="page-header__title">Batch Management</div>
+            <div class="page-header__sub">Create batches and manage student assignments</div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-card__top">
+            <div class="table-card__title">All Batches</div>
+            <div class="table-card__filters">
+              <div class="search-box">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted);flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="batch-search" placeholder="Search batch code…">
+              </div>
+              <button id="btn-create-batch" class="tbl-btn tbl-btn--primary" style="padding:9px 16px;font-size:13.5px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Create Batch
+              </button>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="data-table">
+              <thead>
+                <tr><th>Batch Code</th><th>Project</th><th>Program</th><th>Location</th><th>Status</th><th>Students</th><th>Capacity</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="batches-tbody"><tr><td colspan="8" class="tbl-loading">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PANEL: PLACEMENTS ══ -->
+      <div class="panel" id="panel-placements">
+        <div class="page-header">
+          <div>
+            <div class="page-header__title">Placement Management</div>
+            <div class="page-header__sub">Placement records, joining documents, and monthly payslip tracking</div>
+          </div>
+          <button id="btn-add-placement" class="tbl-btn tbl-btn--primary" style="padding:9px 16px;font-size:13.5px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Placement
+          </button>
+        </div>
+
+        <div class="tab-bar">
+          <button class="tab-btn active" data-placement-tab="all">All</button>
+          <button class="tab-btn" data-placement-tab="active">Active</button>
+          <button class="tab-btn" data-placement-tab="resigned">Resigned</button>
+          <button class="tab-btn" data-placement-tab="terminated">Terminated</button>
+        </div>
+
+        <div class="table-card">
+          <div class="table-card__top">
+            <div class="table-card__title">All Placements</div>
+            <div class="search-box">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted);flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="placement-search" placeholder="Search student, company…">
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="data-table">
+              <thead>
+                <tr><th>Student</th><th>Batch</th><th>Company</th><th>Designation</th><th>Salary</th><th>Joining Date</th><th>Status</th><th>Docs</th><th>Payslips</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="placements-tbody"><tr><td colspan="10" class="tbl-loading">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PANEL: DOCUMENT MANAGEMENT ══ -->
+      <div class="panel" id="panel-documents">
+        <div class="page-header">
+          <div>
+            <div class="page-header__title">Document Management</div>
+            <div class="page-header__sub">View, download, verify, and manage every uploaded document across both projects</div>
+          </div>
+        </div>
+
+        <div class="tab-bar">
+          <button class="tab-btn active" data-doc-tab="all">All Documents</button>
+          <button class="tab-btn" data-doc-tab="registration">Registration</button>
+          <button class="tab-btn" data-doc-tab="placement">Joining Docs</button>
+          <button class="tab-btn" data-doc-tab="payslip">Payslips</button>
+          <button class="tab-btn" data-doc-tab="unverified">Unverified</button>
+        </div>
+
+        <div class="table-card">
+          <div class="table-card__top">
+            <div class="table-card__title" id="docs-tbl-title">All Documents</div>
+            <div class="table-card__filters">
+              <select class="filter-select" id="doc-filter-project">
+                <option value="">All Projects</option>
+                <option value="nasscom">Nasscom – HDFC</option>
+                <option value="bajaj">Bajaj FinServ</option>
+              </select>
+              <div class="search-box">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted);flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="doc-search" placeholder="Search student, file name…">
+              </div>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="data-table">
+              <thead>
+                <tr><th>Student</th><th>Document</th><th>Type</th><th>File Name</th><th>Uploaded</th><th>Verified</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="documents-tbody"><tr><td colspan="7" class="tbl-loading">Loading…</td></tr></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="documents-pagination"></div>
+        </div>
+      </div>
+
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════════════════════ -->
+
+<!-- Student Profile View Modal -->
+<div class="modal-overlay" id="modal-profile">
+  <div class="modal" style="max-width:600px">
+    <div class="modal__head">
+      <div class="modal__title">Student Profile</div>
+      <button class="modal__close" onclick="closeModal('modal-profile')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal__body" id="profile-body">Loading…</div>
+    <div class="modal__foot"><button class="btn btn-ghost" onclick="closeModal('modal-profile')">Close</button></div>
+  </div>
+</div>
+
+<!-- Edit Student Modal -->
+<div class="modal-overlay" id="modal-edit-student">
+  <div class="modal" style="max-width:560px">
+    <div class="modal__head">
+      <div class="modal__title">Edit Student</div>
+      <button class="modal__close" onclick="closeModal('modal-edit-student')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal__body">
+      <input type="hidden" id="es-id">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="ff"><label class="ff__label">First Name <span style="color:var(--danger)">*</span></label><input class="ff__input" type="text" id="es-first-name"><div class="ff__error" id="es-first-name-error"></div></div>
+        <div class="ff"><label class="ff__label">Last Name <span style="color:var(--danger)">*</span></label><input class="ff__input" type="text" id="es-last-name"><div class="ff__error" id="es-last-name-error"></div></div>
+      </div>
+      <div class="ff"><label class="ff__label">Email <span style="color:var(--danger)">*</span></label><input class="ff__input" type="email" id="es-email"><div class="ff__error" id="es-email-error"></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="ff"><label class="ff__label">Phone <span style="color:var(--danger)">*</span></label><input class="ff__input" type="tel" id="es-phone"><div class="ff__error" id="es-phone-error"></div></div>
+        <div class="ff"><label class="ff__label">Gender</label><select class="ff__select" id="es-gender"><option>Male</option><option>Female</option><option>Other</option><option>Prefer not to say</option></select></div>
+      </div>
+      <div class="ff"><label class="ff__label">Address</label><textarea class="ff__input" id="es-address" rows="2" style="resize:vertical"></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="ff"><label class="ff__label">Aadhaar Number</label><input class="ff__input" type="text" id="es-aadhaar" maxlength="12"></div>
+        <div class="ff"><label class="ff__label">Graduation Year</label><input class="ff__input" type="number" id="es-grad-year"></div>
+      </div>
+      <div class="ff"><label class="ff__label">Registration Status</label>
+        <select class="ff__select" id="es-reg-status">
+          <option value="registered">Registered</option>
+          <option value="batch_assigned">Batch Assigned</option>
+          <option value="training">Training</option>
+          <option value="placed">Placed</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+      <div class="ff"><label class="ff__label">Remarks</label><textarea class="ff__input" id="es-remarks" rows="2" style="resize:vertical" placeholder="Internal notes (optional)"></textarea></div>
+      <p class="ff__hint">Project, program, and location cannot be changed once a student has registered.</p>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-student')">Cancel</button>
+      <button class="btn btn-primary" id="btn-save-student">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create/Edit Batch Modal -->
+<div class="modal-overlay" id="modal-batch">
+  <div class="modal">
+    <div class="modal__head">
+      <div class="modal__title" id="batch-modal-title">Create New Batch</div>
+      <button class="modal__close" onclick="closeModal('modal-batch')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal__body">
+      <input type="hidden" id="nb-id">
+      <div class="ff"><label class="ff__label">Project <span style="color:var(--danger)">*</span></label>
+        <select class="ff__select" id="nb-project"><option value="">Select Project</option></select>
+        <div class="ff__error" id="nb-project-error"></div>
+      </div>
+      <div class="ff"><label class="ff__label">Program <span style="color:var(--danger)">*</span></label>
+        <select class="ff__select" id="nb-program" disabled><option value="">Select project first</option></select>
+        <div class="ff__error" id="nb-program-error"></div>
+      </div>
+      <div class="ff"><label class="ff__label">Location <span style="color:var(--danger)">*</span></label>
+        <select class="ff__select" id="nb-location" disabled><option value="">Select project first</option></select>
+        <div class="ff__error" id="nb-location-error"></div>
+      </div>
+      <div class="ff"><label class="ff__label">Batch Code <span style="color:var(--danger)">*</span></label>
+        <input class="ff__input" type="text" id="nb-code" placeholder="e.g. B01_BFSI_Kolkata Center">
+        <div class="ff__error" id="nb-code-error"></div>
+      </div>
+      <div class="ff"><label class="ff__label">Batch Name</label><input class="ff__input" type="text" id="nb-name" placeholder="Friendly display name (optional)"></div>
+      <div class="ff"><label class="ff__label">Center Name</label><input class="ff__input" type="text" id="nb-center" placeholder="Training center name"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="ff"><label class="ff__label">Capacity</label><input class="ff__input" type="number" id="nb-capacity" placeholder="e.g. 30" min="1"></div>
+        <div class="ff"><label class="ff__label">Status</label>
+          <select class="ff__select" id="nb-status">
+            <option value="upcoming">Upcoming</option>
+            <option value="active">Active</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="ff"><label class="ff__label">Start Date</label><input class="ff__input" type="date" id="nb-start"></div>
+        <div class="ff"><label class="ff__label">End Date</label><input class="ff__input" type="date" id="nb-end"></div>
+      </div>
+      <div class="ff"><label class="ff__label">Trainer Name</label><input class="ff__input" type="text" id="nb-trainer"></div>
+      <div class="ff"><label class="ff__label">Notes</label><textarea class="ff__input" id="nb-notes" rows="2" style="resize:vertical"></textarea></div>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-batch')">Cancel</button>
+      <button class="btn btn-primary" id="btn-save-batch">Create Batch</button>
+    </div>
+  </div>
+</div>
+
+<!-- Batch Detail / Students Modal -->
+<div class="modal-overlay" id="modal-batch-detail">
+  <div class="modal" style="max-width:640px">
+    <div class="modal__head">
+      <div>
+        <div class="modal__title" id="bd-title">Batch Details</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px" id="bd-subtitle"></div>
+      </div>
+      <button class="modal__close" onclick="closeModal('modal-batch-detail')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal__body">
+      <div id="bd-stats" style="display:flex;gap:16px;margin-bottom:18px;flex-wrap:wrap"></div>
+
+      <div style="margin-bottom:18px">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+          <span>Students in this batch</span>
+          <button class="tbl-btn" id="btn-export-batch" style="font-size:11px">⬇ Export CSV</button>
+        </div>
+        <div id="bd-student-list" style="display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto"></div>
+      </div>
+
+      <div style="border-top:1px solid var(--border);padding-top:16px">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:8px">Add student to this batch</div>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <select class="ff__select" id="bd-add-select" style="flex:1;padding:9px 12px;font-size:13.5px;border:1.5px solid var(--border);border-radius:var(--r-md);background:white;font-family:var(--font)">
+            <option value="">Select a student to add…</option>
+          </select>
+          <button class="btn btn-primary" id="btn-bd-add" style="flex-shrink:0;padding:9px 16px">Add</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-batch-detail')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Move Student to Another Batch Modal -->
+<div class="modal-overlay" id="modal-move-batch">
+  <div class="modal">
+    <div class="modal__head">
+      <div class="modal__title">Move to Another Batch</div>
+      <button class="modal__close" onclick="closeModal('modal-move-batch')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal__body">
+      <div style="background:var(--bg);border-radius:var(--r-md);padding:12px 14px;margin-bottom:16px">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:2px">Student</div>
+        <div id="mv-student-name" style="font-size:15px;font-weight:600;color:var(--text)">—</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">Current batch: <strong id="mv-current-batch">—</strong></div>
+      </div>
+      <div class="ff">
+        <label class="ff__label">Move To Batch <span style="color:var(--danger)">*</span></label>
+        <select class="ff__select" id="mv-batch-select"><option value="">Choose a batch…</option></select>
+        <div class="ff__error" id="mv-batch-error"></div>
+      </div>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-move-batch')">Cancel</button>
+      <button class="btn btn-primary" id="btn-do-move">Move Student</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal" style="max-width:400px">
+    <div class="modal__head">
+      <div class="modal__title" id="confirm-title">Confirm Action</div>
+      <button class="modal__close" onclick="closeModal('modal-confirm')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal__body">
+      <p id="confirm-message" style="font-size:13.5px;color:var(--text-secondary);line-height:1.6"></p>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-confirm')">Cancel</button>
+      <button class="btn" id="btn-confirm-action" style="background:var(--danger);color:white;border-color:var(--danger)">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Placement Modal -->
+<div class="modal-overlay" id="modal-placement">
+  <div class="modal" style="max-width:560px">
+    <div class="modal__head">
+      <div class="modal__title" id="placement-modal-title">Add Placement Record</div>
+      <button class="modal__close" onclick="closeModal('modal-placement')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal__body">
+      <input type="hidden" id="pl-id">
+      <div class="ff">
+        <label class="ff__label">Student <span style="color:var(--danger)">*</span></label>
+        <select class="ff__select" id="pl-student"><option value="">Select Student…</option></select>
+        <div class="ff__error" id="pl-student-error"></div>
+        <p class="ff__hint">Name, phone, email, program, and location auto-fill from the student's registration.</p>
+      </div>
+      <div class="ff"><label class="ff__label">Company <span style="color:var(--danger)">*</span></label><input class="ff__input" type="text" id="pl-company" placeholder="Company name"><div class="ff__error" id="pl-company-error"></div></div>
+      <div class="ff"><label class="ff__label">Designation</label><input class="ff__input" type="text" id="pl-designation" placeholder="e.g. Sales Executive"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="ff"><label class="ff__label">Monthly Salary (₹)</label><input class="ff__input" type="number" id="pl-salary" min="0"></div>
+        <div class="ff"><label class="ff__label">Annual CTC (₹)</label><input class="ff__input" type="number" id="pl-ctc" min="0"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="ff"><label class="ff__label">Date of Joining</label><input class="ff__input" type="date" id="pl-doj"></div>
+        <div class="ff"><label class="ff__label">Offer Letter Date</label><input class="ff__input" type="date" id="pl-offer-date"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="ff"><label class="ff__label">Probation Period</label><input class="ff__input" type="text" id="pl-probation" placeholder="e.g. 3 months"></div>
+        <div class="ff"><label class="ff__label">Status</label>
+          <select class="ff__select" id="pl-status">
+            <option value="active">Active</option>
+            <option value="resigned">Resigned</option>
+            <option value="terminated">Terminated</option>
+            <option value="absconded">Absconded</option>
+          </select>
+        </div>
+      </div>
+      <div class="ff"><label class="ff__label">Feedback</label><textarea class="ff__input" id="pl-feedback" rows="2" style="resize:vertical" placeholder="Optional feedback"></textarea></div>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-placement')">Cancel</button>
+      <button class="btn btn-primary" id="btn-save-placement">Save Placement</button>
+    </div>
+  </div>
+</div>
+
+<!-- Joining Documents Modal -->
+<div class="modal-overlay" id="modal-jdocs">
+  <div class="modal" style="max-width:520px">
+    <div class="modal__head">
+      <div>
+        <div class="modal__title">Joining Documents</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px" id="jdocs-subtitle"></div>
+      </div>
+      <button class="modal__close" onclick="closeModal('modal-jdocs')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal__body" id="jdocs-body">Loading…</div>
+    <div class="modal__foot"><button class="btn btn-ghost" onclick="closeModal('modal-jdocs')">Close</button></div>
+  </div>
+</div>
+
+<!-- Payslips Modal -->
+<div class="modal-overlay" id="modal-payslips">
+  <div class="modal" style="max-width:480px">
+    <div class="modal__head">
+      <div>
+        <div class="modal__title">Monthly Payslips</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px" id="payslips-subtitle"></div>
+      </div>
+      <button class="modal__close" onclick="closeModal('modal-payslips')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal__body" id="payslips-body">Loading…</div>
+    <div class="modal__foot"><button class="btn btn-ghost" onclick="closeModal('modal-payslips')">Close</button></div>
+  </div>
+</div>
+
+<!-- Document Preview/Verify Modal -->
+<div class="modal-overlay" id="modal-doc-preview">
+  <div class="modal" style="max-width:460px">
+    <div class="modal__head">
+      <div class="modal__title">Document Details</div>
+      <button class="modal__close" onclick="closeModal('modal-doc-preview')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal__body" id="doc-preview-body">Loading…</div>
+    <div class="modal__foot" id="doc-preview-foot"></div>
+  </div>
+</div>
+
+<button class="sidebar-toggle" id="sidebar-toggle" aria-label="Menu">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+
+<div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+<script type="module" src="/admin/admin.js"></script>
+</body>
+</html>
