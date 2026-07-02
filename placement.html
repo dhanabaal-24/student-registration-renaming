@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Placement Portal &#8212; Ma Foi Careers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/theme.css">
+<style>
+.pl-wrap{max-width:680px;margin:0 auto;padding:var(--sp-7) var(--sp-4)}
+.verify-card{background:white;border:1px solid var(--border);border-radius:var(--r-2xl);box-shadow:var(--shadow-md);padding:40px;max-width:440px;margin:0 auto}
+.verify-card__title{font-size:22px;font-weight:800;color:var(--text);margin-bottom:6px;letter-spacing:-.3px}
+.verify-card__sub{font-size:14px;color:var(--text-secondary);margin-bottom:28px;line-height:1.6}
+.status-card{background:white;border:1px solid var(--border);border-radius:var(--r-xl);padding:24px 28px;margin-bottom:20px}
+.status-card__name{font-size:20px;font-weight:800;color:var(--text);margin-bottom:4px}
+.status-card__meta{font-size:13px;color:var(--text-secondary);display:flex;gap:12px;flex-wrap:wrap}
+.status-card__badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:999px;font-size:12.5px;font-weight:700;margin-top:12px}
+.badge-locked{background:#fef2f2;color:#b91c1c}
+.badge-unlocked{background:#f0fdf4;color:#15803d}
+.locked-module{background:white;border:1.5px dashed var(--border);border-radius:var(--r-xl);padding:40px;text-align:center;margin-bottom:20px}
+.locked-module__icon{font-size:36px;margin-bottom:14px}
+.locked-module__title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:8px}
+.locked-module__sub{font-size:14px;color:var(--text-secondary);line-height:1.6;max-width:340px;margin:0 auto}
+.ps-list{display:flex;flex-direction:column;gap:14px}
+.ps-item{display:flex;align-items:flex-start;gap:16px;background:white;border:1.5px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;transition:border-color .15s}
+.ps-item--active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.07)}
+.ps-item--done{border-color:#16a34a}
+.ps-item--locked{background:var(--bg);opacity:.65}
+.ps-ind{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800}
+.ps-ind--todo{background:var(--bg);color:var(--text-muted);border:2px solid var(--border)}
+.ps-ind--active{background:var(--accent);color:white}
+.ps-ind--done{background:#16a34a;color:white}
+.ps-ind--locked{background:var(--bg);color:var(--text-muted);border:2px dashed var(--border)}
+.ps-body{flex:1;min-width:0}
+.ps-title{font-size:14.5px;font-weight:700;color:var(--text)}
+.ps-sub{font-size:13px;color:var(--text-secondary);margin-top:3px}
+.ps-done{font-size:12px;color:#16a34a;margin-top:4px;font-weight:600}
+.ps-action{margin-top:14px}
+.ps-form{display:flex;flex-direction:column;gap:12px}
+.ps-form .ff{margin:0}
+.ps-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.drop-zone{border:2px dashed var(--border);border-radius:var(--r-md);padding:20px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg);margin-top:10px}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:var(--accent-light)}
+.drop-zone.has-file{border-color:#16a34a;background:#f0fdf4;border-style:solid}
+.drop-zone__hint{font-size:13px;color:var(--text-secondary)}
+.drop-zone__name{font-size:13px;color:#16a34a;font-weight:600;margin-top:4px}
+.drop-zone__err{font-size:12.5px;color:var(--danger);margin-top:6px}
+</style>
+</head>
+<body>
+<header class="portal-header">
+  <a href="index.html" class="portal-logo">
+    <div class="portal-logo__icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+    <div><span class="portal-logo__name">Ma Foi</span><span class="portal-logo__sub">Placement Portal</span></div>
+  </a>
+  <span class="portal-header__badge" id="header-badge" style="display:none"></span>
+</header>
+
+<div class="pl-wrap">
+
+<!-- VERIFY GATE -->
+<div id="verify-phase">
+  <div class="verify-card">
+    <div class="verify-card__title">Placement Portal</div>
+    <div class="verify-card__sub">Enter your registered email and date of birth to access your placement module.</div>
+    <div id="verify-err" class="ff__error" style="font-size:13.5px;margin-bottom:12px;min-height:0"></div>
+    <div class="ff" id="vfield-email">
+      <label class="ff__label">Email Address <span class="ff__req">*</span></label>
+      <input class="ff__input" type="email" id="v_email" placeholder="you@example.com">
+      <span class="ff__error" id="v_email-err"></span>
+    </div>
+    <div class="ff" style="margin-bottom:20px" id="vfield-dob">
+      <label class="ff__label">Date of Birth <span class="ff__req">*</span></label>
+      <input class="ff__input" type="date" id="v_dob">
+      <span class="ff__error" id="v_dob-err"></span>
+    </div>
+    <button class="btn btn-primary" id="btn-verify" style="width:100%;justify-content:center">Access Placement Portal</button>
+  </div>
+</div>
+
+<!-- PLACEMENT MODULE -->
+<div id="placement-phase" style="display:none">
+  <div class="status-card">
+    <div class="status-card__name" id="sc-name"></div>
+    <div class="status-card__meta">
+      <span id="sc-project"></span><span id="sc-program"></span>
+      <span id="sc-location"></span><span id="sc-batch"></span>
+    </div>
+    <div class="status-card__badge" id="sc-badge"></div>
+  </div>
+
+  <!-- Locked state -->
+  <div class="locked-module" id="locked-module" style="display:none">
+    <div class="locked-module__icon">&#x1F512;</div>
+    <div class="locked-module__title">Placement Module Locked</div>
+    <div class="locked-module__sub">Your placement module will unlock once your administrator marks you as placed. Please check back after your training is complete.</div>
+  </div>
+
+  <!-- Workflow timeline -->
+  <div class="ps-list" id="ps-list" style="display:none">
+
+    <!-- Step 1: Placement Details -->
+    <div class="ps-item" id="pstep-1">
+      <div class="ps-ind" id="pind-1">1</div>
+      <div class="ps-body">
+        <div class="ps-title">Placement Details</div>
+        <div class="ps-sub" id="psub-1">Enter your company and joining information</div>
+        <div class="ps-done" id="pdone-1" style="display:none"></div>
+        <div class="ps-action" id="paction-1" style="display:none">
+          <div class="ps-form">
+            <div class="ff"><label class="ff__label">Company Name <span class="ff__req">*</span></label><input class="ff__input" type="text" id="pl_company"><span class="ff__error" id="pl_company-err"></span></div>
+            <div class="ps-grid">
+              <div class="ff"><label class="ff__label">Designation</label><input class="ff__input" type="text" id="pl_designation" placeholder="e.g. Sales Executive"></div>
+              <div class="ff"><label class="ff__label">Monthly Salary (&#x20B9;)</label><input class="ff__input" type="number" id="pl_salary" min="0"></div>
+            </div>
+            <div class="ff"><label class="ff__label">Date of Joining <span class="ff__req">*</span></label><input class="ff__input" type="date" id="pl_doj"><span class="ff__error" id="pl_doj-err"></span></div>
+            <div class="ff"><label class="ff__label">Feedback <span style="font-weight:400;color:var(--text-muted)">(one line)</span></label><input class="ff__input" type="text" id="pl_feedback" placeholder="One-line feedback"></div>
+            <button class="btn btn-primary" id="btn-save-pl" style="align-self:flex-start">Save Placement Details</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Joining Document -->
+    <div class="ps-item" id="pstep-2">
+      <div class="ps-ind" id="pind-2">2</div>
+      <div class="ps-body">
+        <div class="ps-title">Upload Joining Document</div>
+        <div class="ps-sub" id="psub-2">Upload one: Offer Letter, Email Confirmation, or Employee ID Card</div>
+        <div class="ps-done" id="pdone-2" style="display:none"></div>
+        <div class="ps-action" id="paction-2" style="display:none">
+          <div class="ff" style="margin-top:12px">
+            <label class="ff__label">Document Type <span class="ff__req">*</span></label>
+            <select class="ff__select" id="jd_type">
+              <option value="">Select type</option>
+              <option value="offer_letter">Offer Letter</option>
+              <option value="email_confirmation">Email Confirmation</option>
+              <option value="id_card">Employee ID Card</option>
+            </select>
+            <span class="ff__error" id="jd_type-err"></span>
+          </div>
+          <div class="drop-zone" id="jd-drop">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text-muted)"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <div class="drop-zone__hint">Drag &amp; drop or click to browse</div>
+            <div style="font-size:11px;color:var(--text-muted)">PDF &middot; JPG &middot; PNG &middot; max 5 MB</div>
+            <div class="drop-zone__name" id="jd-name" style="display:none"></div>
+          </div>
+          <input type="file" id="jd-input" accept=".pdf,.jpg,.jpeg,.png" style="display:none">
+          <div class="drop-zone__err" id="jd-err"></div>
+          <button class="btn btn-primary" id="btn-upload-jd" style="margin-top:12px">Upload Document</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Steps 3-5: Payslips -->
+    <div class="ps-item" id="pstep-3"><div class="ps-ind" id="pind-3">3</div><div class="ps-body"><div class="ps-title">Month 1 Payslip</div><div class="ps-sub" id="psub-3">Upload your first month salary slip</div><div class="ps-done" id="pdone-3" style="display:none"></div><div class="ps-action" id="paction-3" style="display:none">
+      <div class="drop-zone" id="m1-drop"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text-muted)"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><div class="drop-zone__hint">Drag &amp; drop or click to browse</div><div style="font-size:11px;color:var(--text-muted)">PDF &middot; JPG &middot; PNG &middot; max 5 MB</div><div class="drop-zone__name" id="m1-name" style="display:none"></div></div>
+      <input type="file" id="m1-input" accept=".pdf,.jpg,.jpeg,.png" style="display:none">
+      <div class="drop-zone__err" id="m1-err"></div>
+      <button class="btn btn-primary" id="btn-upload-m1" style="margin-top:12px">Upload Month 1 Payslip</button>
+    </div></div></div>
+
+    <div class="ps-item" id="pstep-4"><div class="ps-ind" id="pind-4">4</div><div class="ps-body"><div class="ps-title">Month 2 Payslip</div><div class="ps-sub" id="psub-4">Upload your second month salary slip</div><div class="ps-done" id="pdone-4" style="display:none"></div><div class="ps-action" id="paction-4" style="display:none">
+      <div class="drop-zone" id="m2-drop"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text-muted)"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><div class="drop-zone__hint">Drag &amp; drop or click to browse</div><div style="font-size:11px;color:var(--text-muted)">PDF &middot; JPG &middot; PNG &middot; max 5 MB</div><div class="drop-zone__name" id="m2-name" style="display:none"></div></div>
+      <input type="file" id="m2-input" accept=".pdf,.jpg,.jpeg,.png" style="display:none">
+      <div class="drop-zone__err" id="m2-err"></div>
+      <button class="btn btn-primary" id="btn-upload-m2" style="margin-top:12px">Upload Month 2 Payslip</button>
+    </div></div></div>
+
+    <div class="ps-item" id="pstep-5"><div class="ps-ind" id="pind-5">5</div><div class="ps-body"><div class="ps-title">Month 3 Payslip</div><div class="ps-sub" id="psub-5">Upload your third month salary slip</div><div class="ps-done" id="pdone-5" style="display:none"></div><div class="ps-action" id="paction-5" style="display:none">
+      <div class="drop-zone" id="m3-drop"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text-muted)"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><div class="drop-zone__hint">Drag &amp; drop or click to browse</div><div style="font-size:11px;color:var(--text-muted)">PDF &middot; JPG &middot; PNG &middot; max 5 MB</div><div class="drop-zone__name" id="m3-name" style="display:none"></div></div>
+      <input type="file" id="m3-input" accept=".pdf,.jpg,.jpeg,.png" style="display:none">
+      <div class="drop-zone__err" id="m3-err"></div>
+      <button class="btn btn-primary" id="btn-upload-m3" style="margin-top:12px">Upload Month 3 Payslip</button>
+    </div></div></div>
+
+  </div><!-- /ps-list -->
+</div><!-- /placement-phase -->
+</div><!-- /pl-wrap -->
+<div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+<script type="module">
+import { supabase } from './js/supabase.js';
+import { toast }    from './js/toast.js';
+import { verifyStudentByEmailDob } from './js/id-generator.js';
+import {
+    VIEW_STUDENT_FULL, TABLE_PLACEMENTS, TABLE_PLACEMENT_DOCS, TABLE_PAYSLIPS,
+    STORAGE_BUCKET, buildOfferFilename, buildPayslipFilename,
+} from './js/config.js';
+
+const $ = id => document.getElementById(id);
+const v = id => $(id)?.value?.trim()||'';
+
+const ALLOWED = ['application/pdf','image/jpeg','image/jpg','image/png'];
+const MAX_MB  = 5 * 1024 * 1024;
+
+let student = null, placement = null, jdocs = [], payslips = [];
+const files = { jd:null, m1:null, m2:null, m3:null };
+
+// ── Verify gate ──────────────────────────────────────────────────
+$('btn-verify').addEventListener('click', async () => {
+    const email = v('v_email').toLowerCase(), dob = v('v_dob');
+    $('verify-err').textContent = ''; $('v_email-err').textContent = ''; $('v_dob-err').textContent = '';
+    $('vfield-email').classList.remove('ff--error'); $('vfield-dob').classList.remove('ff--error');
+    let err = false;
+    if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ $('v_email-err').textContent='Valid email required.'; $('vfield-email').classList.add('ff--error'); err=true; }
+    if(!dob){ $('v_dob-err').textContent='Date of birth required.'; $('vfield-dob').classList.add('ff--error'); err=true; }
+    if(err) return;
+    const btn=$('btn-verify'); btn.disabled=true; btn.textContent='Verifying\u2026';
+    try{
+        const result = await verifyStudentByEmailDob(email, dob);
+        if(!result){ $('verify-err').textContent='No registration found with those details.'; return; }
+        const {data:s,error:sE}=await supabase.from(VIEW_STUDENT_FULL).select('*').eq('id',result.studentId).single();
+        if(sE||!s) throw new Error('Could not load registration.');
+        student = s;
+        // Load existing placement
+        const {data:pls}=await supabase.from(TABLE_PLACEMENTS).select('*').eq('student_id',s.id).order('created_at',{ascending:false}).limit(1);
+        placement = pls?.[0]||null;
+        if(placement){
+            const [{data:jd},{data:ps}]=await Promise.all([
+                supabase.from(TABLE_PLACEMENT_DOCS).select('*').eq('placement_id',placement.id),
+                supabase.from(TABLE_PAYSLIPS).select('*').eq('placement_id',placement.id),
+            ]);
+            jdocs=jd||[]; payslips=ps||[];
+        }
+        $('verify-phase').style.display='none';
+        $('placement-phase').style.display='';
+        renderModule();
+    }catch(e){ $('verify-err').textContent=e.message||'Verification failed.'; }
+    finally{ btn.disabled=false; btn.textContent='Access Placement Portal'; }
+});
+
+// ── Render module ────────────────────────────────────────────────
+function renderModule(){
+    const s=student;
+    const badge=$('header-badge'); badge.textContent=s.ma_foi_id||s.full_name; badge.style.display='';
+    $('sc-name').textContent     = s.full_name;
+    $('sc-project').textContent  = s.project_name;
+    $('sc-program').textContent  = s.program_name;
+    $('sc-location').textContent = s.location_name;
+    $('sc-batch').textContent    = s.batch_code ? 'Batch: '+s.batch_code : 'No batch assigned';
+    const isPlaced = s.placement_status === 'placed';
+    const scBadge = $('sc-badge');
+    if(!isPlaced){
+        scBadge.className='status-card__badge badge-locked'; scBadge.textContent='\uD83D\uDD12 Placement Locked';
+        $('locked-module').style.display=''; $('ps-list').style.display='none';
+    } else {
+        scBadge.className='status-card__badge badge-unlocked'; scBadge.textContent='\u2713 Placement Unlocked';
+        $('locked-module').style.display='none'; $('ps-list').style.display='flex';
+        renderSteps();
+    }
+}
+
+function renderSteps(){
+    const hasPl   = !!placement;
+    const hasJD   = jdocs.length>0;
+    const hasM1   = payslips.some(p=>p.month_number===1);
+    const hasM2   = payslips.some(p=>p.month_number===2);
+    const hasM3   = payslips.some(p=>p.month_number===3);
+
+    hasPl ? setDone(1, placement.company+' \u00b7 DOJ: '+(placement.date_of_joining||'\u2014')) : setActive(1);
+    hasJD ? setDone(2, jdocs[0].doc_type.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())+' uploaded')
+          : (hasPl ? setActive(2) : setLocked(2,'Complete Step 1 first'));
+    hasM1 ? setDone(3,'Month 1 payslip uploaded') : (hasJD ? setActive(3) : setLocked(3,'Complete Step 2 first'));
+    hasM2 ? setDone(4,'Month 2 payslip uploaded') : (hasM1 ? setActive(4) : setLocked(4,'Upload Month 1 first'));
+    hasM3 ? setDone(5,'All 3 payslips uploaded \u2014 done! \uD83C\uDF89') : (hasM2 ? setActive(5) : setLocked(5,'Upload Month 2 first'));
+}
+
+function setDone(n,info){ const it=$('pstep-'+n),ind=$('pind-'+n),dn=$('pdone-'+n),ac=$('paction-'+n); it.className='ps-item ps-item--done'; ind.className='ps-ind ps-ind--done'; ind.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'; if(dn){dn.textContent=info;dn.style.display='';} if(ac)ac.style.display='none'; }
+function setActive(n){ const it=$('pstep-'+n),ind=$('pind-'+n),ac=$('paction-'+n); it.className='ps-item ps-item--active'; ind.className='ps-ind ps-ind--active'; ind.textContent=n; if(ac)ac.style.display=''; }
+function setLocked(n,reason){ const it=$('pstep-'+n),ind=$('pind-'+n),sub=$('psub-'+n),ac=$('paction-'+n); it.className='ps-item ps-item--locked'; ind.className='ps-ind ps-ind--locked'; ind.textContent='\uD83D\uDD12'; if(sub&&reason)sub.textContent=reason; if(ac)ac.style.display='none'; }
+
+// ── Step 1: Save placement details ───────────────────────────────
+$('btn-save-pl').addEventListener('click', async()=>{
+    const company=v('pl_company'), doj=v('pl_doj');
+    $('pl_company-err').textContent=''; $('pl_doj-err').textContent='';
+    let ok=true;
+    if(!company){$('pl_company-err').textContent='Company name required.';ok=false;}
+    if(!doj){$('pl_doj-err').textContent='Date of joining required.';ok=false;}
+    if(!ok) return;
+    const btn=$('btn-save-pl'); btn.disabled=true; btn.textContent='Saving\u2026';
+    try{
+        const s=student;
+        const {data:pl,error:pE}=await supabase.from(TABLE_PLACEMENTS).insert([{
+            student_id:s.id, batch_id:s.batch_id||null,
+            student_name:s.full_name, phone:s.phone, email:s.email,
+            program_name:s.program_name, location_name:s.location_name,
+            project_code:s.project_code, ma_foi_id:s.ma_foi_id||null,
+            batch_code:s.batch_code||null,
+            company, designation:v('pl_designation')||null,
+            salary:v('pl_salary')||null, date_of_joining:doj,
+            feedback:v('pl_feedback')||null, placement_status:'active',
+        }]).select().single();
+        if(pE) throw pE;
+        placement=pl;
+        toast.success('Placement details saved!');
+        renderSteps();
+    }catch(e){ toast.error('Save failed: '+e.message); }
+    finally{ btn.disabled=false; btn.textContent='Save Placement Details'; }
+});
+
+// ── Step 2: Upload joining document ─────────────────────────────
+setupDrop('jd-drop','jd-input','jd-name','jd', f=>files.jd=f);
+$('btn-upload-jd').addEventListener('click', async()=>{
+    const docType=v('jd_type'); $('jd_type-err').textContent=''; $('jd-err').textContent='';
+    if(!docType){$('jd_type-err').textContent='Select a document type.';return;}
+    if(!files.jd){$('jd-err').textContent='Please select a file.';return;}
+    await uploadJoinDoc(docType, files.jd);
+});
+
+async function uploadJoinDoc(docType, file){
+    const btn=$('btn-upload-jd'); btn.disabled=true; btn.textContent='Uploading\u2026';
+    try{
+        const s=student, p=placement;
+        const labels={'offer_letter':'Offer Letter','email_confirmation':'Email Confirmation','id_card':'Employee ID Card'};
+        const ext=file.name.slice(file.name.lastIndexOf('.'));
+        const fn=buildOfferFilename(s.ma_foi_id||null, s.batch_code||'NoBatch', s.full_name, p.company, labels[docType], ext);
+        const path='placements/'+p.id+'/'+fn;
+        const {error:uE}=await supabase.storage.from(STORAGE_BUCKET).upload(path,file,{upsert:true,contentType:file.type});
+        if(uE) throw uE;
+        const {data:{publicUrl}}=supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+        const {error:rE}=await supabase.from(TABLE_PLACEMENT_DOCS).upsert({placement_id:p.id,doc_type:docType,file_name:fn,storage_path:path,public_url:publicUrl},{onConflict:'placement_id,doc_type'});
+        if(rE) throw rE;
+        jdocs=[{doc_type:docType,file_name:fn,public_url:publicUrl,placement_id:p.id}];
+        files.jd=null; toast.success('Document uploaded!'); renderSteps();
+    }catch(e){ toast.error('Upload failed: '+e.message); }
+    finally{ btn.disabled=false; btn.textContent='Upload Document'; }
+}
+
+// ── Steps 3-5: Payslip uploads ───────────────────────────────────
+setupDrop('m1-drop','m1-input','m1-name','m1', f=>files.m1=f);
+setupDrop('m2-drop','m2-input','m2-name','m2', f=>files.m2=f);
+setupDrop('m3-drop','m3-input','m3-name','m3', f=>files.m3=f);
+
+['m1','m2','m3'].forEach((k,i)=>{
+    const month=i+1;
+    $('btn-upload-'+k).addEventListener('click', ()=>uploadPayslip(month,files[k],'m'+month+'-err','btn-upload-'+k));
+});
+
+async function uploadPayslip(month, file, errId, btnId){
+    $(errId).textContent='';
+    if(!file){$(errId).textContent='Please select a file.';return;}
+    if(month===2&&!payslips.some(p=>p.month_number===1)){$(errId).textContent='Upload Month 1 first.';return;}
+    if(month===3&&!payslips.some(p=>p.month_number===2)){$(errId).textContent='Upload Month 2 first.';return;}
+    const btn=$(btnId); btn.disabled=true; btn.textContent='Uploading\u2026';
+    try{
+        const s=student, p=placement;
+        const ext=file.name.slice(file.name.lastIndexOf('.'));
+        const fn=buildPayslipFilename(s.ma_foi_id||null, s.batch_code||'NoBatch', month, s.full_name, p.company, ext);
+        const path='payslips/'+p.id+'/M'+month+'_'+fn;
+        const {error:uE}=await supabase.storage.from(STORAGE_BUCKET).upload(path,file,{upsert:true,contentType:file.type});
+        if(uE) throw uE;
+        const {data:{publicUrl}}=supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+        const {error:rE}=await supabase.from(TABLE_PAYSLIPS).upsert({placement_id:p.id,month_number:month,file_name:fn,storage_path:path,public_url:publicUrl},{onConflict:'placement_id,month_number'});
+        if(rE) throw rE;
+        payslips=payslips.filter(ps=>ps.month_number!==month);
+        payslips.push({month_number:month,file_name:fn}); files['m'+month]=null;
+        toast.success('Month '+month+' payslip uploaded!'); renderSteps();
+    }catch(e){ toast.error('Upload failed: '+e.message); }
+    finally{ btn.disabled=false; btn.textContent='Upload Month '+month+' Payslip'; }
+}
+
+// ── Dropzone helper ──────────────────────────────────────────────
+function setupDrop(dropId,inputId,nameId,key,onFile){
+    const drop=$(dropId),input=$(inputId),nameEl=$(nameId);
+    function handle(file){
+        if(!ALLOWED.includes(file.type)){toast.error('Invalid type. Use PDF, JPG, PNG.');return;}
+        if(file.size>MAX_MB){toast.error('File too large. Max 5 MB.');return;}
+        onFile(file); drop.classList.add('has-file');
+        nameEl.textContent=file.name; nameEl.style.display='';
+        drop.querySelector('.drop-zone__hint').textContent='\u2713 File selected';
+    }
+    drop.addEventListener('click',()=>input.click());
+    input.addEventListener('change',e=>{if(e.target.files?.[0])handle(e.target.files[0]);input.value='';});
+    drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('drag-over');});
+    drop.addEventListener('dragleave',()=>drop.classList.remove('drag-over'));
+    drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('drag-over');if(e.dataTransfer?.files?.[0])handle(e.dataTransfer.files[0]);});
+}
+</script>
+</body>
+</html>

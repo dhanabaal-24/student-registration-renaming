@@ -1,1664 +1,935 @@
-/**
- * admin.js — Admin Dashboard V2
- * ================================
- * Drives the entire admin dashboard against the V2 normalized schema:
- *   students_v2, registration_documents, batches_v2,
- *   batch_assignments_v2, batch_history,
- *   v_student_full, v_batch_full, v_dashboard_stats
- */
-
 'use strict';
-
 import { supabase } from '../js/supabase.js';
 import { toast }    from '../js/toast.js';
 import {
-  TABLE_STUDENTS, TABLE_BATCHES, TABLE_BATCH_ASSIGNMENTS, TABLE_BATCH_HISTORY,
-  TABLE_PLACEMENTS, TABLE_PLACEMENT_DOCS, TABLE_PAYSLIPS, TABLE_REGISTRATION_DOCS,
-  VIEW_STUDENT_FULL, VIEW_BATCH_FULL, VIEW_DASHBOARD_STATS,
-  PROJECT_NASSCOM, PROJECT_BAJAJ, STORAGE_BUCKET,
+    TABLE_STUDENTS, TABLE_BATCHES, TABLE_BATCH_ASSIGNMENTS, TABLE_BATCH_HISTORY,
+    TABLE_PLACEMENTS, TABLE_PLACEMENT_DOCS, TABLE_PAYSLIPS,
+    TABLE_REGISTRATION_DOCS, TABLE_CENTERS, TABLE_AUDIT_LOGS,
+    VIEW_STUDENT_FULL, VIEW_BATCH_FULL, VIEW_DASHBOARD_STATS,
+    PROJECT_NASSCOM, PROJECT_BAJAJ, STORAGE_BUCKET,
+    buildRegDocFilename, buildBatchCode,
 } from '../js/config.js';
 
-// ════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 // AUTH
-// ════════════════════════════════════════════════════════════
-
-const ADMIN_CREDENTIALS = [
-  { username: 'admin', password: 'MaFoi@2024' },
-  { username: 'mafoi', password: 'Admin#123'  },
+// ══════════════════════════════════════════════════════════
+const CREDS = [
+    { username:'admin',  password:'MaFoi@2024' },
+    { username:'mafoi',  password:'Admin#123'  },
 ];
-const SESSION_KEY = 'mafoi_admin_auth';
+const SESSION_KEY = 'mafoi_admin_v5';
 
-function isAuthenticated() {
-  try {
-    const s = sessionStorage.getItem(SESSION_KEY);
-    if (!s) return false;
-    const { token, expires } = JSON.parse(s);
-    if (Date.now() > expires) { sessionStorage.removeItem(SESSION_KEY); return false; }
-    return token === btoa('mafoi_admin_ok');
-  } catch { return false; }
+function isAuthed() {
+    try {
+        const s = JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');
+        if (!s) return false;
+        if (Date.now() > s.expires) { sessionStorage.removeItem(SESSION_KEY); return false; }
+        return s.token === btoa('mafoi_ok_v5');
+    } catch { return false; }
+}
+function setAuthed(user) {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+        token: btoa('mafoi_ok_v5'), expires: Date.now() + 8*3600*1000, user,
+    }));
+}
+function getUser() {
+    try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null')?.user||'Admin'; }
+    catch { return 'Admin'; }
 }
 
-function setAuthenticated(username) {
-  const expires = Date.now() + (8 * 60 * 60 * 1000);
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ token: btoa('mafoi_admin_ok'), expires, username }));
-}
-
-function getAuthUsername() {
-  try {
-    const s = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null');
-    return s?.username || 'Admin';
-  } catch { return 'Admin'; }
-}
-
-function showAdmin() {
-  document.getElementById('login-overlay').style.display = 'none';
-  document.getElementById('admin-wrap').classList.add('authenticated');
-  const username = getAuthUsername();
-  document.getElementById('admin-username-badge').textContent = username.charAt(0).toUpperCase();
-  document.getElementById('topbar-username').textContent = username;
-  console.log('[Admin] Login overlay hidden, calling bootDashboard()');
-  bootDashboard().catch(err => {
-    console.error('[Admin] bootDashboard() failed:', err);
-    toast.error('Dashboard failed to load: ' + (err.message || 'Unknown error') + '. Check console for details.');
-  });
-}
-
-const loginBtn      = document.getElementById('login-btn');
-const loginError    = document.getElementById('login-error');
-const loginErrText  = document.getElementById('login-error-text');
-const usernameInput = document.getElementById('login-username');
-const passwordInput = document.getElementById('login-password');
-const pwToggle       = document.getElementById('pw-toggle');
-
-pwToggle.addEventListener('click', () => {
-  const isText = passwordInput.type === 'text';
-  passwordInput.type = isText ? 'password' : 'text';
-  document.getElementById('eye-icon').innerHTML = isText
-    ? '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
-    : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
-});
+const $ = id => document.getElementById(id);
+const loginBtn = $('login-btn'), loginErr = $('login-error');
+const usernameI = $('login-username'), passwordI = $('login-password');
 
 function attemptLogin() {
-  console.log('[Admin Login] attemptLogin() called');
-  const username = usernameInput.value.trim();
-  const password = passwordInput.value;
-  console.log('[Admin Login] username entered:', JSON.stringify(username));
-  loginError.classList.remove('show');
-  usernameInput.classList.remove('error');
-  passwordInput.classList.remove('error');
-
-  if (!username || !password) {
-    loginErrText.textContent = 'Please enter both username and password.';
-    loginError.classList.add('show');
-    if (!username) usernameInput.classList.add('error');
-    if (!password) passwordInput.classList.add('error');
-    return;
-  }
-
-  loginBtn.disabled = true;
-  loginBtn.innerHTML = '<span class="login-spinner"></span> Signing in…';
-
-  setTimeout(() => {
-    console.log('[Admin Login] Checking credentials against:', ADMIN_CREDENTIALS.map(c => c.username));
-    const match = ADMIN_CREDENTIALS.find(c => c.username === username && c.password === password);
-    console.log('[Admin Login] Match found:', !!match);
-    if (match) {
-      setAuthenticated(username);
-      loginBtn.innerHTML = '✓ Verified';
-      console.log('[Admin Login] Authenticated, calling showAdmin() in 400ms');
-      setTimeout(() => {
-        console.log('[Admin Login] Calling showAdmin() now');
-        try {
-          showAdmin();
-        } catch (err) {
-          console.error('[Admin Login] showAdmin() threw an error:', err);
-          loginErrText.textContent = 'Login succeeded but dashboard failed to load: ' + err.message;
-          loginError.classList.add('show');
+    const u = usernameI.value.trim(), p = passwordI.value;
+    loginErr.style.display = 'none';
+    if (!u||!p) { loginErr.textContent='Enter username and password.'; loginErr.style.display=''; return; }
+    loginBtn.disabled=true; loginBtn.textContent='Signing in\u2026';
+    setTimeout(()=>{
+        const match = CREDS.find(c=>c.username===u&&c.password===p);
+        console.log('[Admin] Login attempt for:', u, '| match:', !!match);
+        if(match){
+            setAuthed(u);
+            loginBtn.textContent='\u2713 Verified';
+            setTimeout(()=>{ showAdmin(); }, 400);
+        } else {
+            loginErr.textContent='Invalid username or password.';
+            loginErr.style.display='';
+            passwordI.value='';
+            loginBtn.disabled=false; loginBtn.textContent='Sign In';
         }
-      }, 400);
-    } else {
-      loginErrText.textContent = 'Invalid username or password. Please try again.';
-      loginError.classList.add('show');
-      usernameInput.classList.add('error');
-      passwordInput.classList.add('error');
-      passwordInput.value = '';
-      loginBtn.disabled = false;
-      loginBtn.innerHTML = 'Sign In';
-      passwordInput.focus();
-    }
-  }, 500);
+    }, 500);
 }
-
 loginBtn.addEventListener('click', attemptLogin);
-[usernameInput, passwordInput].forEach(el => {
-  el.addEventListener('keydown', e => { if (e.key === 'Enter') attemptLogin(); });
-  el.addEventListener('input', () => { el.classList.remove('error'); loginError.classList.remove('show'); });
-});
+[usernameI,passwordI].forEach(el=>el.addEventListener('keydown',e=>{ if(e.key==='Enter') attemptLogin(); }));
+$('btn-logout').addEventListener('click',()=>{ sessionStorage.removeItem(SESSION_KEY); location.reload(); });
 
-document.getElementById('btn-logout').addEventListener('click', () => {
-  sessionStorage.removeItem(SESSION_KEY);
-  window.location.reload();
-});
+function showAdmin() {
+    $('login-overlay').style.display='none';
+    $('admin-wrap').classList.add('authenticated');
+    $('admin-avatar').textContent = getUser().charAt(0).toUpperCase();
+    console.log('[Admin] Calling bootDashboard()');
+    bootDashboard().catch(err=>{
+        console.error('[Admin] bootDashboard failed:', err);
+        toast.error('Dashboard failed to load: '+(err.message||'Unknown error'));
+    });
+}
 
-// ════════════════════════════════════════════════════════════
-// GLOBAL STATE
-// ════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+let allStudents=[], allBatches=[], allPlacements=[], allCenters=[], allDocuments=[];
+let allProjects=[], allPrograms=[], allLocations=[];
+const jdocCounts={}, payCounts={};
 
-let allStudents   = [];
-let allBatches    = [];
-let allProjects   = [];
-let allPrograms   = [];
-let allLocations  = [];
-let allPlacements = [];
-let allDocuments  = [];
-
-let studentFilter   = { project: 'all', program: '', location: '', batch: '', search: '' };
-let studentSort      = { field: 'created_at', dir: 'desc' };
-let studentPage       = 1;
-const PAGE_SIZE = 20;
-
-let batchSearch = '';
-
-// ════════════════════════════════════════════════════════════
-// PANEL / SIDEBAR NAVIGATION
-// ════════════════════════════════════════════════════════════
-
-const TOPBAR_TITLES = {
-  dashboard:   'Admin Dashboard',
-  students:    'Student Management',
-  batches:     'Batch Management',
-  placements:  'Placements',
-  documents:   'Document Management',
+// Panel navigation
+const PANEL_TITLES = {
+    dashboard:'Dashboard', students:'Students', batches:'Batches',
+    centers:'Centers', placements:'Placements', documents:'Documents',
 };
-
-document.querySelectorAll('.nav-item[data-panel]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(`panel-${btn.dataset.panel}`).classList.add('active');
-    const titleEl = document.getElementById('topbar-title');
-    const label = TOPBAR_TITLES[btn.dataset.panel] || 'Admin Dashboard';
-    const icon = titleEl.querySelector('svg').outerHTML;
-    titleEl.innerHTML = icon + label;
-  });
+document.querySelectorAll('.nav-item[data-panel]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+        document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+        btn.classList.add('active');
+        $('panel-'+btn.dataset.panel).classList.add('active');
+        $('topbar-title').innerHTML = btn.querySelector('svg').outerHTML + PANEL_TITLES[btn.dataset.panel];
+    });
 });
-document.getElementById('sidebar-toggle').addEventListener('click', () => {
-  const sb = document.getElementById('sidebar');
-  sb.style.display = sb.style.display === 'flex' ? 'none' : 'flex';
+$('sidebar-toggle').addEventListener('click',()=>{
+    const sb=$('sidebar');
+    sb.style.display = sb.style.display==='flex'?'none':'flex';
 });
+$('btn-refresh-stats').addEventListener('click',()=>loadDashboardStats().then(renderStats));
 
-// ════════════════════════════════════════════════════════════
-// BOOT — load everything once authenticated
-// ════════════════════════════════════════════════════════════
+// Modal helpers
+window.closeModal = id => $(id).classList.remove('show');
+function openModal(id) { $(id).classList.add('show'); }
 
-async function bootDashboard() {
-  await loadLookups();
-  await loadStudents();
-  await Promise.all([loadBatches(), loadPlacements()]);
-  await loadDocuments(); // depends on allStudents being populated
-  await refreshPlacementDocCounts();
-  await loadDashboardStats();
-  populateFilterDropdowns();
-  renderStudents();
-  renderBatches();
-  populatePlacementStudentDropdown();
-  renderPlacements();
-  renderDocuments();
+// Confirm dialog
+let _confirmCb = null;
+function showConfirm(title, msg, cb, label='Delete') {
+    $('confirm-title').textContent = title;
+    $('confirm-msg').innerHTML = msg;
+    $('btn-confirm-action').textContent = label;
+    $('btn-confirm-action').style.background = label==='Delete'?'var(--danger)':'var(--accent)';
+    $('btn-confirm-action').style.borderColor = label==='Delete'?'var(--danger)':'var(--accent)';
+    _confirmCb = cb;
+    openModal('modal-confirm');
+}
+$('btn-confirm-action').addEventListener('click',()=>{ closeModal('modal-confirm'); if(_confirmCb) _confirmCb(); _confirmCb=null; });
+
+function esc(s){const d=document.createElement('div');d.textContent=String(s??'');return d.innerHTML;}
+function fmtDate(iso){if(!iso)return'\u2014';return new Date(iso).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}
+
+// Audit log
+async function logAudit(action,entity,id,details){
+    try{ await supabase.from(TABLE_AUDIT_LOGS).insert([{admin_username:getUser(),action,entity_type:entity,entity_id:id||null,details}]); }
+    catch(e){ console.warn('[Audit]',e); }
 }
 
-async function loadLookups() {
-  const [{ data: projects }, { data: programs }, { data: locations }] = await Promise.all([
-    supabase.from('projects').select('*'),
-    supabase.from('programs').select('*'),
-    supabase.from('locations').select('*'),
-  ]);
-  allProjects  = projects  || [];
-  allPrograms  = programs  || [];
-  allLocations = locations || [];
+// ══════════════════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════════════════
+async function bootDashboard(){
+    await loadLookups();
+    await loadStudents();
+    await Promise.all([loadBatches(), loadCenters(), loadPlacements()]);
+    await loadDocuments();
+    await loadDocCounts();
+    await loadDashboardStats();
+    populateFilters();
+    renderStats();
+    renderStudents();
+    renderBatches();
+    renderCenters();
+    renderPlacements();
+    renderDocuments();
+    populatePlacementStudentDropdown();
 }
 
-async function loadStudents() {
-  const { data, error } = await supabase
-    .from(VIEW_STUDENT_FULL)
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) { console.error('[Admin] loadStudents error:', error); toast.error('Failed to load students: ' + error.message); return; }
-  allStudents = data || [];
+async function loadLookups(){
+    const [{data:proj},{data:prog},{data:loc}] = await Promise.all([
+        supabase.from('projects').select('*'),
+        supabase.from('programs').select('*'),
+        supabase.from('locations').select('*'),
+    ]);
+    allProjects  = proj||[];
+    allPrograms  = prog||[];
+    allLocations = loc||[];
 }
 
-async function loadBatches() {
-  const { data, error } = await supabase
-    .from(VIEW_BATCH_FULL)
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) { console.error('[Admin] loadBatches error:', error); toast.error('Failed to load batches: ' + error.message); return; }
-  allBatches = data || [];
+async function loadStudents(){
+    const {data,error}=await supabase.from(VIEW_STUDENT_FULL).select('*').order('created_at',{ascending:false});
+    if(error){console.error('[Admin] loadStudents:',error);return;}
+    allStudents=data||[];
+}
+async function loadBatches(){
+    const {data,error}=await supabase.from(VIEW_BATCH_FULL).select('*').order('created_at',{ascending:false});
+    if(error){console.error('[Admin] loadBatches:',error);return;}
+    allBatches=data||[];
+}
+async function loadCenters(){
+    const {data,error}=await supabase.from(TABLE_CENTERS).select('*, projects(name,code), locations(name,code)').order('created_at',{ascending:false});
+    if(error){console.error('[Admin] loadCenters:',error);return;}
+    allCenters=(data||[]).map(c=>({...c,project_code:c.projects?.code,project_name:c.projects?.name,location_code:c.locations?.code,location_name:c.locations?.name}));
+}
+async function loadPlacements(){
+    const {data,error}=await supabase.from(TABLE_PLACEMENTS).select('*').order('created_at',{ascending:false});
+    if(error){console.error('[Admin] loadPlacements:',error);return;}
+    allPlacements=data||[];
+}
+async function loadDocCounts(){
+    const [{data:jd},{data:ps}]=await Promise.all([
+        supabase.from(TABLE_PLACEMENT_DOCS).select('placement_id'),
+        supabase.from(TABLE_PAYSLIPS).select('placement_id'),
+    ]);
+    (jd||[]).forEach(d=>{ jdocCounts[d.placement_id]=(jdocCounts[d.placement_id]||0)+1; });
+    (ps||[]).forEach(d=>{ payCounts[d.placement_id]=(payCounts[d.placement_id]||0)+1; });
+}
+async function loadDocuments(){
+    const studentMap=new Map(allStudents.map(s=>[s.id,s]));
+    const [{data:regDocs},{data:jdocs},{data:pays}]=await Promise.all([
+        supabase.from(TABLE_REGISTRATION_DOCS).select('*').order('uploaded_at',{ascending:false}),
+        supabase.from(TABLE_PLACEMENT_DOCS).select('*,placements_v2(student_name,project_code)').order('uploaded_at',{ascending:false}),
+        supabase.from(TABLE_PAYSLIPS).select('*,placements_v2(student_name,project_code)').order('uploaded_at',{ascending:false}),
+    ]);
+    const regRows=(regDocs||[]).map(d=>{const s=studentMap.get(d.student_id);return{kind:'registration',id:d.id,studentName:s?.full_name||'?',maFoiId:s?.ma_foi_id||null,projectCode:s?.project_code||null,label:d.doc_label,fileName:d.file_name,url:d.public_url,uploadedAt:d.uploaded_at,verified:d.verified,sourceTable:TABLE_REGISTRATION_DOCS};});
+    const jdRows=(jdocs||[]).map(d=>({kind:'placement',id:d.id,studentName:d.placements_v2?.student_name||'?',maFoiId:null,projectCode:d.placements_v2?.project_code||null,label:d.doc_type.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()),fileName:d.file_name,url:d.public_url,uploadedAt:d.uploaded_at,verified:null,sourceTable:TABLE_PLACEMENT_DOCS}));
+    const psRows=(pays||[]).map(d=>({kind:'payslip',id:d.id,studentName:d.placements_v2?.student_name||'?',maFoiId:null,projectCode:d.placements_v2?.project_code||null,label:'Payslip M'+d.month_number,fileName:d.file_name,url:d.public_url,uploadedAt:d.uploaded_at,verified:null,sourceTable:TABLE_PAYSLIPS}));
+    allDocuments=[...regRows,...jdRows,...psRows].sort((a,b)=>new Date(b.uploadedAt)-new Date(a.uploadedAt));
 }
 
-async function loadPlacements() {
-  const { data, error } = await supabase
-    .from(TABLE_PLACEMENTS)
-    .select('*, batches_v2(batch_code)')
-    .order('created_at', { ascending: false });
-  if (error) { console.error('[Admin] loadPlacements error:', error); toast.error('Failed to load placements: ' + error.message); return; }
-  allPlacements = (data || []).map(p => ({ ...p, batch_code: p.batches_v2?.batch_code || null }));
+// ══════════════════════════════════════════════════════════
+// DASHBOARD STATS
+// ══════════════════════════════════════════════════════════
+let dashStats={};
+async function loadDashboardStats(){
+    const {data,error}=await supabase.from(VIEW_DASHBOARD_STATS).select('*').single();
+    if(error){console.error('[Admin] stats:',error);return;}
+    dashStats=data||{};
 }
-
-async function loadDocuments() {
-  // Registration documents, joined with student info for display
-  const { data: regDocs, error: regErr } = await supabase
-    .from(TABLE_REGISTRATION_DOCS)
-    .select('*')
-    .order('uploaded_at', { ascending: false });
-  if (regErr) { console.error('[Admin] loadDocuments (registration) error:', regErr); }
-
-  const studentMap = new Map(allStudents.map(s => [s.id, s]));
-  const regRows = (regDocs || []).map(d => {
-    const s = studentMap.get(d.student_id);
-    return {
-      kind: 'registration',
-      id: d.id,
-      studentName: s?.full_name || 'Unknown Student',
-      maFoiId: s?.ma_foi_id || null,
-      projectCode: s?.project_code || null,
-      docLabel: d.doc_label,
-      fileName: d.file_name,
-      publicUrl: d.public_url,
-      uploadedAt: d.uploaded_at,
-      verified: d.verified,
-      sourceTable: TABLE_REGISTRATION_DOCS,
-    };
-  });
-
-  // Placement documents (offer letter, email confirmation, ID card)
-  const { data: placeDocs } = await supabase.from(TABLE_PLACEMENT_DOCS).select('*, placements_v2(student_name)');
-  const placeRows = (placeDocs || []).map(d => ({
-    kind: 'placement',
-    id: d.id,
-    studentName: d.placements_v2?.student_name || 'Unknown Student',
-    maFoiId: null, projectCode: null,
-    docLabel: d.doc_type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-    fileName: d.file_name,
-    publicUrl: d.public_url,
-    uploadedAt: d.uploaded_at,
-    verified: null,
-    sourceTable: TABLE_PLACEMENT_DOCS,
-  }));
-
-  // Payslips
-  const { data: payslips } = await supabase.from(TABLE_PAYSLIPS).select('*, placements_v2(student_name)');
-  const paySlipRows = (payslips || []).map(d => ({
-    kind: 'payslip',
-    id: d.id,
-    studentName: d.placements_v2?.student_name || 'Unknown Student',
-    maFoiId: null, projectCode: null,
-    docLabel: `Payslip Month ${d.month_number}`,
-    fileName: d.file_name,
-    publicUrl: d.public_url,
-    uploadedAt: d.uploaded_at,
-    verified: null,
-    sourceTable: TABLE_PAYSLIPS,
-  }));
-
-  allDocuments = [...regRows, ...placeRows, ...paySlipRows].sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
-}
-
-async function loadDashboardStats() {
-  const { data, error } = await supabase.from(VIEW_DASHBOARD_STATS).select('*').single();
-  const grid = document.getElementById('dash-stats-grid');
-  if (error || !data) {
-    grid.innerHTML = `<div class="tbl-empty" style="grid-column:1/-1">Could not load dashboard stats. Has schema_v4_normalized.sql been run?</div>`;
-    return;
-  }
-
-  const cards = [
-    { label: 'Total Registered Students',        val: data.total_students,             icon: iconUsers(),  color: '#2563eb', bg: '#eff6ff' },
-    { label: 'Nasscom Foundation – HDFC',         val: data.nasscom_students,           icon: iconLayers(), color: '#2563eb', bg: '#eff6ff' },
-    { label: 'Bajaj FinServ',                      val: data.bajaj_students,             icon: iconBriefcase(), color: '#b45309', bg: '#fff7ed' },
-    { label: 'Data Analytics Students',            val: data.data_analytics_students,    icon: iconChart(),  color: '#7c3aed', bg: '#f5f3ff' },
-    { label: 'BFSI Students',                      val: data.bfsi_students,              icon: iconChart(),  color: '#2563eb', bg: '#eff6ff' },
-    { label: 'Gold Loan Students',                 val: data.gold_loan_students,         icon: iconCoin(),   color: '#b45309', bg: '#fff7ed' },
-    { label: 'Microfinance Students',              val: data.microfinance_students,      icon: iconCoin(),   color: '#b45309', bg: '#fff7ed' },
-    { label: 'Waiting for Batch Assignment',       val: data.waiting_batch_assignment,   icon: iconClock(),  color: '#dc2626', bg: '#fef2f2' },
-    { label: 'Assigned to Batches',                 val: data.assigned_to_batches,        icon: iconCheck(),  color: '#16a34a', bg: '#f0fdf4' },
-    { label: 'Students Placed',                    val: data.students_placed,            icon: iconCheck(),  color: '#16a34a', bg: '#f0fdf4' },
-    { label: 'Pending Placement',                  val: data.students_pending_placement, icon: iconClock(),  color: '#dc2626', bg: '#fef2f2' },
-    { label: 'Documents Uploaded',                 val: data.documents_uploaded,         icon: iconDoc(),    color: '#475569', bg: '#f1f5f9' },
-    { label: 'Total Batches',                      val: data.total_batches,              icon: iconGrid(),   color: '#7c3aed', bg: '#f5f3ff' },
-  ];
-
-  grid.innerHTML = cards.map(c => `
+function renderStats(){
+    const cards=[
+        {label:'Total Students', val:dashStats.total_students, bg:'#eff6ff',color:'#1d4ed8',icon:'<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>'},
+        {label:'Nasscom',        val:dashStats.nasscom_students, bg:'#eff6ff',color:'#1d4ed8',icon:'<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>'},
+        {label:'Bajaj FinServ',  val:dashStats.bajaj_students,  bg:'#fff7ed',color:'#b45309',icon:'<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>'},
+        {label:'BFSI',           val:dashStats.bfsi_students,   bg:'#f0fdf4',color:'#16a34a',icon:'<path d="M12 2L2 7l10 5 10-5-10-5z"/>'},
+        {label:'Data Analytics', val:dashStats.da_students,     bg:'#f0fdf4',color:'#16a34a',icon:'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>'},
+        {label:'Gold Loan',      val:dashStats.gl_students,     bg:'#fefce8',color:'#a16207',icon:'<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>'},
+        {label:'Microfinance',   val:dashStats.mfi_students,    bg:'#fefce8',color:'#a16207',icon:'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'},
+        {label:'Unassigned',     val:dashStats.unassigned_students, bg:'#fef2f2',color:'#b91c1c',icon:'<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>'},
+        {label:'In Batches',     val:dashStats.assigned_students,   bg:'#f0fdf4',color:'#16a34a',icon:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>'},
+        {label:'Placed',         val:dashStats.placed_students,     bg:'#f0fdf4',color:'#16a34a',icon:'<polyline points="20 6 9 17 4 12"/>'},
+        {label:'Pending Placement',val:dashStats.pending_placement, bg:'#fef3c7',color:'#b45309',icon:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'},
+        {label:'Reg Docs',       val:dashStats.reg_docs_uploaded,   bg:'#f5f3ff',color:'#7c3aed',icon:'<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>'},
+        {label:'Verified Docs',  val:dashStats.reg_docs_verified,   bg:'#f0fdf4',color:'#16a34a',icon:'<polyline points="9 11 12 14 22 4"/>'},
+        {label:'Payslips M1',    val:dashStats.m1_uploaded, bg:'#faf5ff',color:'#7c3aed',icon:'<rect x="2" y="3" width="20" height="14" rx="2"/>'},
+        {label:'Payslips M2',    val:dashStats.m2_uploaded, bg:'#faf5ff',color:'#7c3aed',icon:'<rect x="2" y="3" width="20" height="14" rx="2"/>'},
+        {label:'Payslips M3',    val:dashStats.m3_uploaded, bg:'#faf5ff',color:'#7c3aed',icon:'<rect x="2" y="3" width="20" height="14" rx="2"/>'},
+        {label:'Total Batches',  val:dashStats.total_batches, bg:'#f0f9ff',color:'#0284c7',icon:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>'},
+    ];
+    $('stats-grid').innerHTML=cards.map(c=>`
     <div class="stat-card">
       <div class="stat-card__top">
-        <span class="stat-card__label-top">${c.label}</span>
-        <div class="stat-card__icon" style="background:${c.bg};color:${c.color}">${c.icon}</div>
+        <span class="stat-card__label">${c.label}</span>
+        <div class="stat-card__icon" style="background:${c.bg};color:${c.color}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${c.icon}</svg>
+        </div>
       </div>
-      <div class="stat-card__val">${c.val ?? 0}</div>
+      <div class="stat-card__val">${c.val??0}</div>
     </div>`).join('');
 }
 
-// ── Tiny inline icon helpers ────────────────────────────────────
-function iconUsers()     { return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>`; }
-function iconLayers()    { return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`; }
-function iconBriefcase() { return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>`; }
-function iconChart()     { return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`; }
-function iconCoin()      { return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h4.5a2 2 0 010 4H9.5a2 2 0 000 4H15"/></svg>`; }
-function iconClock()     { return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`; }
-function iconCheck()     { return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`; }
-function iconDoc()       { return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`; }
-function iconGrid()      { return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`; }
+// ══════════════════════════════════════════════════════════
+// STUDENTS
+// ══════════════════════════════════════════════════════════
+let studentFilter={tab:'all',program:'',location:'',search:''};
+let studentPage=1; const STUDENT_PAGE=20;
 
-// ════════════════════════════════════════════════════════════
-// STUDENT MANAGEMENT
-// ════════════════════════════════════════════════════════════
+function populateFilters(){ /* dropdowns already hardcoded in HTML */ }
 
-document.querySelectorAll('.tab-btn[data-project-tab]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn[data-project-tab]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    studentFilter.project = btn.dataset.projectTab;
-    studentPage = 1;
-    populateFilterDropdowns();
-    renderStudents();
-  });
+document.querySelectorAll('.tab-btn[data-student-tab]').forEach(b=>{
+    b.addEventListener('click',()=>{
+        document.querySelectorAll('.tab-btn[data-student-tab]').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active'); studentFilter.tab=b.dataset.studentTab; studentPage=1; renderStudents();
+    });
 });
+$('student-filter-program').addEventListener('change',e=>{studentFilter.program=e.target.value;studentPage=1;renderStudents();});
+$('student-filter-location').addEventListener('change',e=>{studentFilter.location=e.target.value;studentPage=1;renderStudents();});
+$('student-search').addEventListener('input',e=>{studentFilter.search=e.target.value.toLowerCase();studentPage=1;renderStudents();});
 
-document.getElementById('student-search').addEventListener('input', e => {
-  studentFilter.search = e.target.value.toLowerCase();
-  studentPage = 1;
-  renderStudents();
-});
-document.getElementById('filter-program').addEventListener('change', e => {
-  studentFilter.program = e.target.value; studentPage = 1; renderStudents();
-});
-document.getElementById('filter-location').addEventListener('change', e => {
-  studentFilter.location = e.target.value; studentPage = 1; renderStudents();
-});
-document.getElementById('filter-batch').addEventListener('change', e => {
-  studentFilter.batch = e.target.value; studentPage = 1; renderStudents();
+// Global search in topbar
+$('global-search').addEventListener('input',e=>{
+    const q=e.target.value.toLowerCase();
+    if(!q.trim()){renderStudents();return;}
+    // Switch to students panel
+    document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.querySelector('.nav-item[data-panel="students"]').classList.add('active');
+    $('panel-students').classList.add('active');
+    studentFilter.search=q; studentPage=1; renderStudents();
 });
 
-// Sortable column headers
-document.querySelectorAll('.data-table th[data-sort]').forEach(th => {
-  th.addEventListener('click', () => {
-    const field = th.dataset.sort;
-    if (studentSort.field === field) {
-      studentSort.dir = studentSort.dir === 'asc' ? 'desc' : 'asc';
-    } else {
-      studentSort = { field, dir: 'asc' };
+function getFilteredStudents(){
+    let rows=allStudents;
+    if(studentFilter.tab==='nasscom') rows=rows.filter(s=>s.project_code==='nasscom');
+    else if(studentFilter.tab==='bajaj') rows=rows.filter(s=>s.project_code==='bajaj');
+    else if(studentFilter.tab==='unassigned') rows=rows.filter(s=>!s.batch_id);
+    else if(studentFilter.tab==='placed') rows=rows.filter(s=>s.placement_status==='placed');
+    if(studentFilter.program) rows=rows.filter(s=>s.program_name===studentFilter.program);
+    if(studentFilter.location) rows=rows.filter(s=>s.location_name===studentFilter.location);
+    if(studentFilter.search){
+        const q=studentFilter.search;
+        rows=rows.filter(s=>
+            (s.full_name||'').toLowerCase().includes(q)||
+            (s.email||'').toLowerCase().includes(q)||
+            (s.phone||'').includes(q)||
+            (s.ma_foi_id||'').toLowerCase().includes(q)
+        );
     }
-    document.querySelectorAll('.data-table th[data-sort]').forEach(h => h.classList.remove('sorted'));
-    th.classList.add('sorted');
-    renderStudents();
-  });
-});
-
-function populateFilterDropdowns() {
-  const projFilter = studentFilter.project === 'all' ? null : studentFilter.project;
-
-  const programs = projFilter
-    ? allPrograms.filter(p => allProjects.find(pr => pr.id === p.project_id)?.code === projFilter)
-    : allPrograms;
-  const locations = projFilter
-    ? allLocations.filter(l => allProjects.find(pr => pr.id === l.project_id)?.code === projFilter)
-    : allLocations;
-
-  const progSel = document.getElementById('filter-program');
-  const curProg = progSel.value;
-  progSel.innerHTML = '<option value="">All Programs</option>' +
-    [...new Set(programs.map(p => p.name))].map(n => `<option value="${n}">${n}</option>`).join('');
-  if ([...progSel.options].some(o => o.value === curProg)) progSel.value = curProg;
-
-  const locSel = document.getElementById('filter-location');
-  const curLoc = locSel.value;
-  locSel.innerHTML = '<option value="">All Locations</option>' +
-    [...new Set(locations.map(l => l.name))].map(n => `<option value="${n}">${n}</option>`).join('');
-  if ([...locSel.options].some(o => o.value === curLoc)) locSel.value = curLoc;
-
-  const batchSel = document.getElementById('filter-batch');
-  const curBatch = batchSel.value;
-  const relevantBatches = projFilter ? allBatches.filter(b => b.project_code === projFilter) : allBatches;
-  batchSel.innerHTML = '<option value="">All Batches</option>' +
-    relevantBatches.map(b => `<option value="${b.batch_code}">${b.batch_code}</option>`).join('');
-  if ([...batchSel.options].some(o => o.value === curBatch)) batchSel.value = curBatch;
+    return rows;
 }
 
-function getFilteredStudents() {
-  let rows = allStudents;
-  if (studentFilter.project !== 'all') rows = rows.filter(s => s.project_code === studentFilter.project);
-  if (studentFilter.program)  rows = rows.filter(s => s.program_name === studentFilter.program);
-  if (studentFilter.location) rows = rows.filter(s => s.location_name === studentFilter.location);
-  if (studentFilter.batch)    rows = rows.filter(s => s.batch_code === studentFilter.batch);
-  if (studentFilter.search) {
-    const q = studentFilter.search;
-    rows = rows.filter(s =>
-      (s.full_name||'').toLowerCase().includes(q) ||
-      (s.ma_foi_id||'').toLowerCase().includes(q) ||
-      (s.phone||'').includes(q) ||
-      (s.email||'').toLowerCase().includes(q)
-    );
-  }
-
-  rows = [...rows].sort((a, b) => {
-    let av = a[studentSort.field], bv = b[studentSort.field];
-    if (av == null) av = '';
-    if (bv == null) bv = '';
-    if (studentSort.field === 'created_at') { av = new Date(av).getTime(); bv = new Date(bv).getTime(); }
-    if (av < bv) return studentSort.dir === 'asc' ? -1 : 1;
-    if (av > bv) return studentSort.dir === 'asc' ? 1 : -1;
-    return 0;
-  });
-
-  return rows;
-}
-
-function renderStudents() {
-  const rows  = getFilteredStudents();
-  const total = rows.length;
-  const start = (studentPage - 1) * PAGE_SIZE;
-  const page  = rows.slice(start, start + PAGE_SIZE);
-
-  document.getElementById('students-tbl-title').textContent =
-    studentFilter.project === 'all' ? 'All Students' :
-    studentFilter.project === 'nasscom' ? 'Nasscom Foundation – HDFC Students' : 'Bajaj FinServ Students';
-
-  const tbody = document.getElementById('students-tbody');
-  if (!page.length) {
-    tbody.innerHTML = `<tr><td colspan="9" class="tbl-empty">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-      No students found matching your filters.</td></tr>`;
-  } else {
-    tbody.innerHTML = page.map(s => `
-      <tr>
-        <td>${s.ma_foi_id ? `<code style="font-size:12px;background:var(--bg);padding:2px 6px;border-radius:4px">${esc(s.ma_foi_id)}</code>` : '<span style="color:var(--text-muted);font-size:12px">—</span>'}</td>
-        <td style="font-weight:500">${esc(s.full_name)}</td>
-        <td>${esc(s.phone)}</td>
-        <td><span class="badge ${s.project_code==='nasscom'?'badge-blue':'badge-amber'}">${esc(s.project_name)}</span></td>
-        <td>${esc(s.program_name)}</td>
-        <td>${esc(s.location_name)}</td>
-        <td>${s.batch_code ? `<span class="badge badge-green">${esc(s.batch_code)}</span>` : '<span class="badge badge-gray">Unassigned</span>'}</td>
-        <td style="font-size:12px;color:var(--text-secondary)">${fmtDate(s.created_at)}</td>
-        <td style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="tbl-btn" onclick='viewProfile("${s.id}")'>View</button>
-          <button class="tbl-btn" onclick='openEditStudent("${s.id}")'>Edit</button>
-          ${s.batch_id
-            ? `<button class="tbl-btn" onclick='openMoveBatch("${s.id}")'>Move</button>
-               <button class="tbl-btn tbl-btn--danger" onclick='removeFromBatchDirect("${s.id}")'>Unassign</button>`
-            : `<button class="tbl-btn tbl-btn--primary" onclick='openAssignBatch("${s.id}")'>Assign</button>`
-          }
-          <button class="tbl-btn tbl-btn--danger" onclick='confirmDeleteStudent("${s.id}")'>Delete</button>
-        </td>
-      </tr>`).join('');
-  }
-
-  const totalPages = Math.ceil(total / PAGE_SIZE);
-  const pag = document.getElementById('students-pagination');
-  if (totalPages <= 1) {
-    pag.innerHTML = `<span>Showing ${total} student${total===1?'':'s'}</span>`;
-  } else {
-    let btns = '';
-    const maxShown = 7;
-    let lo = Math.max(1, studentPage - 3), hi = Math.min(totalPages, lo + maxShown - 1);
-    lo = Math.max(1, hi - maxShown + 1);
-    if (lo > 1) btns += `<button class="page-btn" onclick="window.__goStudentPage(1)">1</button><span style="padding:0 4px">…</span>`;
-    for (let i = lo; i <= hi; i++) btns += `<button class="page-btn ${i===studentPage?'active':''}" onclick="window.__goStudentPage(${i})">${i}</button>`;
-    if (hi < totalPages) btns += `<span style="padding:0 4px">…</span><button class="page-btn" onclick="window.__goStudentPage(${totalPages})">${totalPages}</button>`;
-    pag.innerHTML = `<span>Showing ${start+1}–${Math.min(start+PAGE_SIZE,total)} of ${total}</span><div class="page-btns">${btns}</div>`;
-  }
-}
-window.__goStudentPage = (n) => { studentPage = n; renderStudents(); };
-
-// ── View Profile ──────────────────────────────────────────────
-window.viewProfile = async (studentId) => {
-  openModal('modal-profile');
-  document.getElementById('profile-body').innerHTML = '<div class="tbl-loading">Loading…</div>';
-
-  const s = allStudents.find(x => x.id === studentId);
-  if (!s) { document.getElementById('profile-body').innerHTML = '<div class="tbl-empty">Student not found.</div>'; return; }
-
-  const { data: docs } = await supabase.from('registration_documents').select('*').eq('student_id', studentId);
-
-  const row = (label, val) => val ? `<div class="profile-row"><div class="profile-row__label">${label}</div><div class="profile-row__val">${esc(val)}</div></div>` : '';
-
-  document.getElementById('profile-body').innerHTML = `
-    <div class="profile-section">
-      <div class="profile-section__title">Identity</div>
-      ${row('Ma Foi ID', s.ma_foi_id || '— (Bajaj has no Ma Foi ID)')}
-      ${row('Full Name', s.full_name)}
-      ${row('Email', s.email)} ${row('Phone', s.phone)} ${row('Alternate Phone', s.alternate_phone)}
-      ${row('Gender', s.gender)} ${row('Date of Birth', s.date_of_birth)}
-      ${row('Aadhaar', maskAadhaar(s.aadhaar_number))} ${row('PAN', s.pan_number)}
-    </div>
-    <div class="profile-section">
-      <div class="profile-section__title">Address</div>
-      ${row('Address', s.address)} ${row('City', s.city)} ${row('State', s.state)} ${row('PIN', s.pincode)}
-    </div>
-    <div class="profile-section">
-      <div class="profile-section__title">Program</div>
-      ${row('Project', s.project_name)} ${row('Program', s.program_name)} ${row('Location', s.location_name)}
-      ${row('Qualification', s.educational_qualification)} ${row('Graduation Year', s.graduation_year)}
-      ${row('Batch', s.batch_code || 'Not assigned')}
-    </div>
-    <div class="profile-section">
-      <div class="profile-section__title">Family Background</div>
-      ${row("Father's Name", s.father_name)} ${row("Mother's Name", s.mother_name)}
-      ${row("Father's Occupation", s.father_occupation)} ${row('Parent Contact', s.parent_contact)}
-      ${row('Family Members', s.total_family_members)} ${row('Annual Income', s.annual_family_income)}
-    </div>
-    <div class="profile-section">
-      <div class="profile-section__title">Status</div>
-      ${row('Registration Status', s.registration_status)} ${row('Placement Status', s.placement_status)}
-      ${row('Remarks', s.remarks)} ${row('Registered On', fmtDate(s.created_at))}
-    </div>
-    <div class="profile-section">
-      <div class="profile-section__title">Documents (${docs?.length||0})</div>
-      ${(docs||[]).map(d => `<div class="profile-row"><div class="profile-row__label">${esc(d.doc_label)}</div><div class="profile-row__val"><a href="${d.public_url}" target="_blank" rel="noopener" style="color:var(--accent)">View File</a></div></div>`).join('') || '<div style="font-size:13px;color:var(--text-muted)">No documents uploaded.</div>'}
-    </div>`;
-};
-
-// ── Edit Student ─────────────────────────────────────────────
-window.openEditStudent = (studentId) => {
-  const s = allStudents.find(x => x.id === studentId);
-  if (!s) return;
-  document.getElementById('es-id').value = s.id;
-  document.getElementById('es-first-name').value = s.first_name || '';
-  document.getElementById('es-last-name').value  = s.last_name  || '';
-  document.getElementById('es-email').value      = s.email      || '';
-  document.getElementById('es-phone').value      = s.phone      || '';
-  document.getElementById('es-gender').value     = s.gender     || 'Male';
-  document.getElementById('es-address').value    = s.address    || '';
-  document.getElementById('es-aadhaar').value    = s.aadhaar_number || '';
-  document.getElementById('es-grad-year').value  = s.graduation_year || '';
-  document.getElementById('es-reg-status').value = s.registration_status || 'registered';
-  document.getElementById('es-remarks').value    = s.remarks || '';
-  ['es-first-name-error','es-last-name-error','es-email-error','es-phone-error'].forEach(id => {
-    document.getElementById(id).textContent = '';
-  });
-  openModal('modal-edit-student');
-};
-
-document.getElementById('btn-save-student').addEventListener('click', async () => {
-  const id = document.getElementById('es-id').value;
-  const firstName = document.getElementById('es-first-name').value.trim();
-  const lastName  = document.getElementById('es-last-name').value.trim();
-  const email     = document.getElementById('es-email').value.trim();
-  const phone     = document.getElementById('es-phone').value.trim();
-
-  let ok = true;
-  const setE = (id, msg) => { document.getElementById(id).textContent = msg; if (msg) ok = false; };
-  setE('es-first-name-error', !firstName ? 'First name is required.' : '');
-  setE('es-last-name-error',  !lastName  ? 'Last name is required.'  : '');
-  setE('es-email-error', !email ? 'Email is required.' : (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'Invalid email format.' : ''));
-  setE('es-phone-error', !/^\d{10}$/.test(phone) ? 'Phone must be exactly 10 digits.' : '');
-  if (!ok) return;
-
-  const btn = document.getElementById('btn-save-student');
-  btn.disabled = true; btn.textContent = 'Saving…';
-
-  try {
-    const { error } = await supabase.from(TABLE_STUDENTS).update({
-      first_name: firstName, last_name: lastName,
-      full_name: `${firstName} ${lastName}`,
-      email: email.toLowerCase(), phone,
-      gender: document.getElementById('es-gender').value,
-      address: document.getElementById('es-address').value.trim() || null,
-      aadhaar_number: document.getElementById('es-aadhaar').value.trim() || null,
-      graduation_year: document.getElementById('es-grad-year').value ? parseInt(document.getElementById('es-grad-year').value) : null,
-      registration_status: document.getElementById('es-reg-status').value,
-      remarks: document.getElementById('es-remarks').value.trim() || null,
-    }).eq('id', id);
-    if (error) throw error;
-
-    await logAudit('student_edit', 'student', id, { fields_changed: ['first_name','last_name','email','phone','gender','address','aadhaar_number','graduation_year','registration_status','remarks'] });
-    toast.success('Student updated successfully');
-    closeModal('modal-edit-student');
-    await loadStudents();
-    renderStudents();
-  } catch (err) {
-    toast.error('Update failed: ' + err.message);
-  } finally {
-    btn.disabled = false; btn.textContent = 'Save Changes';
-  }
-});
-
-// ── Delete Student ───────────────────────────────────────────
-window.confirmDeleteStudent = (studentId) => {
-  const s = allStudents.find(x => x.id === studentId);
-  if (!s) return;
-  showConfirm(
-    'Delete Student',
-    `Are you sure you want to delete <strong>${esc(s.full_name)}</strong> (${s.ma_foi_id || s.phone})? This will permanently remove their registration, documents, and batch history. This action cannot be undone.`,
-    async () => {
-      try {
-        await supabase.from(TABLE_BATCH_ASSIGNMENTS).delete().eq('student_id', studentId);
-        await supabase.from('registration_documents').delete().eq('student_id', studentId);
-        const { error } = await supabase.from(TABLE_STUDENTS).delete().eq('id', studentId);
-        if (error) throw error;
-        await logAudit('student_delete', 'student', studentId, { name: s.full_name });
-        toast.success(`${s.full_name} deleted`);
-        await Promise.all([loadStudents(), loadBatches()]);
-        await loadDashboardStats();
-        renderStudents(); renderBatches();
-      } catch (err) {
-        toast.error('Delete failed: ' + err.message);
-      }
+function renderStudents(){
+    const rows=getFilteredStudents();
+    const total=rows.length;
+    const start=(studentPage-1)*STUDENT_PAGE;
+    const page=rows.slice(start,start+STUDENT_PAGE);
+    $('students-tbl-title').textContent=total+' Student'+(total!==1?'s':'');
+    const tbody=$('students-tbody');
+    if(!page.length){
+        tbody.innerHTML=`<tr><td colspan="8" class="tbl-empty">No students found.</td></tr>`;
+        $('students-pagination').innerHTML='';
+        return;
     }
-  );
-};
-
-// ════════════════════════════════════════════════════════════
-// BATCH ASSIGNMENT / MOVE / REMOVE (from Students table)
-// ════════════════════════════════════════════════════════════
-
-let assignTargetId = null;
-
-window.openAssignBatch = (studentId) => {
-  const s = allStudents.find(x => x.id === studentId);
-  if (!s) return;
-  assignTargetId = studentId;
-  showConfirmlessBatchPicker(s, null);
-};
-
-window.openMoveBatch = (studentId) => {
-  const s = allStudents.find(x => x.id === studentId);
-  if (!s) return;
-  assignTargetId = studentId;
-  document.getElementById('mv-student-name').textContent = s.full_name;
-  document.getElementById('mv-current-batch').textContent = s.batch_code || '—';
-  const sel = document.getElementById('mv-batch-select');
-  const relevant = allBatches.filter(b => b.project_code === s.project_code && b.batch_code !== s.batch_code);
-  sel.innerHTML = '<option value="">Choose a batch…</option>' +
-    relevant.map(b => `<option value="${b.id}">${esc(b.batch_code)} — ${esc(b.program_name)}</option>`).join('');
-  document.getElementById('mv-batch-error').textContent = '';
-  openModal('modal-move-batch');
-};
-
-function showConfirmlessBatchPicker(student, currentBatchId) {
-  // Reuse the move-batch modal for first-time assignment too
-  document.getElementById('mv-student-name').textContent = student.full_name;
-  document.getElementById('mv-current-batch').textContent = 'Not assigned';
-  const sel = document.getElementById('mv-batch-select');
-  const relevant = allBatches.filter(b => b.project_code === student.project_code);
-  sel.innerHTML = '<option value="">Choose a batch…</option>' +
-    relevant.map(b => `<option value="${b.id}">${esc(b.batch_code)} — ${esc(b.program_name)}</option>`).join('');
-  document.getElementById('mv-batch-error').textContent = '';
-  document.querySelector('#modal-move-batch .modal__title').textContent = 'Assign to Batch';
-  openModal('modal-move-batch');
+    const plBadge={pending:'badge-amber',placed:'badge-green',not_applicable:'badge-gray'};
+    tbody.innerHTML=page.map(s=>`<tr>
+      <td><div style="font-weight:600">${esc(s.full_name)}</div><div style="font-size:11.5px;color:var(--text-muted)">${s.ma_foi_id?esc(s.ma_foi_id):''} &bull; ${esc(s.phone)}</div></td>
+      <td><span class="badge badge-${s.project_code==='nasscom'?'nasscom':'bajaj'}">${esc(s.project_name)}</span></td>
+      <td>${esc(s.program_name)}</td>
+      <td>${esc(s.location_name)}</td>
+      <td>${s.batch_code?`<span class="badge badge-blue">${esc(s.batch_code)}</span>`:'<span class="badge badge-gray">None</span>'}</td>
+      <td><span class="badge ${plBadge[s.placement_status]||'badge-gray'}">${esc(s.placement_status)}</span></td>
+      <td style="font-size:13px">${s.docs_uploaded||0}</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap">
+        <button class="tbl-btn" onclick="viewStudent('${s.id}')">View</button>
+        <button class="tbl-btn" onclick="editStudent('${s.id}')">Edit</button>
+        ${s.batch_id
+            ? `<button class="tbl-btn" onclick="unassignStudent('${s.id}','${esc(s.full_name)}')">Unassign</button>`
+            : `<button class="tbl-btn tbl-btn--primary" onclick="openAssign('${s.id}','${esc(s.project_code)}')">Assign</button>`}
+        <button class="tbl-btn tbl-btn--danger" onclick="deleteStudent('${s.id}','${esc(s.full_name)}')">Delete</button>
+      </td>
+    </tr>`).join('');
+    // Pagination
+    const pages=Math.ceil(total/STUDENT_PAGE);
+    if(pages<=1){ $('students-pagination').innerHTML=`<span>Showing ${total} student${total!==1?'s':''}</span>`; return; }
+    let btns='';
+    for(let i=1;i<=pages;i++) btns+=`<button class="page-btn${i===studentPage?' active':''}" onclick="window.__spage(${i})">${i}</button>`;
+    $('students-pagination').innerHTML=`<span>Showing ${start+1}&ndash;${Math.min(start+STUDENT_PAGE,total)} of ${total}</span><div class="page-btns">${btns}</div>`;
 }
+window.__spage=n=>{studentPage=n;renderStudents();};
 
-document.getElementById('btn-do-move').addEventListener('click', async () => {
-  const batchId = document.getElementById('mv-batch-select').value;
-  if (!batchId) { document.getElementById('mv-batch-error').textContent = 'Please select a batch.'; return; }
-  if (!assignTargetId) return;
+// View student
+window.viewStudent=async(id)=>{
+    const s=allStudents.find(x=>x.id===id); if(!s) return;
+    openModal('modal-student-view');
+    const r=(k,v)=>`<div class="profile-row"><div class="profile-row__label">${k}</div><div class="profile-row__val">${esc(v||'\u2014')}</div></div>`;
+    $('student-view-body').innerHTML=
+        r('Ma Foi ID', s.ma_foi_id)+r('Full Name',s.full_name)+r('Email',s.email)+r('Phone',s.phone)+
+        r('Gender',s.gender)+r('DOB',fmtDate(s.date_of_birth))+r('Aadhaar','XXXX XXXX '+( s.aadhaar_number?.slice(-4)||''))+
+        r('Project',s.project_name)+r('Program',s.program_name)+r('Location',s.location_name)+
+        r('Batch',s.batch_code)+r('Qualification',s.educational_qualification)+r('Grad Year',s.graduation_year)+
+        r('Address',s.address)+r('Father',s.father_name)+r('Mother',s.mother_name)+
+        r('Family Income',s.annual_family_income)+r('Reg Status',s.registration_status)+r('Placement',s.placement_status)+
+        r('Docs Uploaded',s.docs_uploaded)+r('Registered',fmtDate(s.created_at));
+};
 
-  const student = allStudents.find(x => x.id === assignTargetId);
-  const newBatch = allBatches.find(b => b.id === batchId);
-  const oldBatchId = student.batch_id || null;
-
-  const btn = document.getElementById('btn-do-move');
-  btn.disabled = true; btn.textContent = 'Saving…';
-
-  try {
-    await supabase.from(TABLE_BATCH_ASSIGNMENTS).delete().eq('student_id', assignTargetId);
-    const { error } = await supabase.from(TABLE_BATCH_ASSIGNMENTS).insert([{ student_id: assignTargetId, batch_id: batchId }]);
-    if (error) throw error;
-
-    await supabase.from(TABLE_BATCH_HISTORY).insert([{
-      student_id: assignTargetId, from_batch_id: oldBatchId, to_batch_id: batchId,
-      action: oldBatchId ? 'reassigned' : 'assigned', performed_by: getAuthUsername(),
-    }]);
-
-    await supabase.from(TABLE_STUDENTS).update({ registration_status: 'batch_assigned' }).eq('id', assignTargetId);
-
-    await renameDocumentsForBatch(student, newBatch.batch_code);
-
-    toast.success(`${student.full_name} ${oldBatchId ? 'moved to' : 'assigned to'} ${newBatch.batch_code}`);
-    closeModal('modal-move-batch');
-    document.querySelector('#modal-move-batch .modal__title').textContent = 'Move to Another Batch';
-    await Promise.all([loadStudents(), loadBatches()]);
-    await loadDashboardStats();
-    renderStudents(); renderBatches();
-  } catch (err) {
-    toast.error('Failed: ' + err.message);
-  } finally {
-    btn.disabled = false; btn.textContent = 'Move Student';
-  }
+// Edit student (status/remarks only from admin panel)
+window.editStudent=async(id)=>{
+    const s=allStudents.find(x=>x.id===id); if(!s) return;
+    $('edit-student-id').value=id;
+    $('edit-reg-status').value=s.registration_status||'registered';
+    $('edit-pl-status').value=s.placement_status||'pending';
+    $('edit-remarks').value=s.remarks||'';
+    openModal('modal-student-edit');
+};
+$('btn-save-student-edit').addEventListener('click',async()=>{
+    const id=$('edit-student-id').value;
+    const btn=$('btn-save-student-edit'); btn.disabled=true; btn.textContent='Saving\u2026';
+    try{
+        const {error}=await supabase.from(TABLE_STUDENTS).update({
+            registration_status:$('edit-reg-status').value,
+            placement_status:$('edit-pl-status').value,
+            remarks:$('edit-remarks').value||null,
+        }).eq('id',id);
+        if(error) throw error;
+        await logAudit('student_edit','student',id,{});
+        toast.success('Student updated');
+        closeModal('modal-student-edit');
+        await loadStudents(); renderStudents(); renderStats && loadDashboardStats().then(renderStats);
+    }catch(e){ toast.error('Update failed: '+e.message); }
+    finally{ btn.disabled=false; btn.textContent='Save Changes'; }
 });
 
-window.removeFromBatchDirect = (studentId) => {
-  const s = allStudents.find(x => x.id === studentId);
-  if (!s) return;
-  showConfirm(
-    'Remove From Batch',
-    `Remove <strong>${esc(s.full_name)}</strong> from batch <strong>${esc(s.batch_code)}</strong>? They will appear in "Pending Batch Assignment".`,
-    async () => {
-      try {
-        const { error } = await supabase.from(TABLE_BATCH_ASSIGNMENTS).delete().eq('student_id', studentId);
-        if (error) throw error;
-        await supabase.from(TABLE_BATCH_HISTORY).insert([{
-          student_id: studentId, from_batch_id: s.batch_id, to_batch_id: null,
-          action: 'removed', performed_by: getAuthUsername(),
-        }]);
-        await supabase.from(TABLE_STUDENTS).update({ registration_status: 'registered' }).eq('id', studentId);
-        toast.success(`${s.full_name} removed from ${s.batch_code}`);
-        await Promise.all([loadStudents(), loadBatches()]);
-        await loadDashboardStats();
-        renderStudents(); renderBatches();
-      } catch (err) {
-        toast.error('Remove failed: ' + err.message);
-      }
-    },
-    'Remove'
-  );
+// Delete student
+window.deleteStudent=(id,name)=>{
+    showConfirm('Delete Student',`Delete <strong>${esc(name)}</strong>? This cannot be undone.`,async()=>{
+        try{
+            const {error}=await supabase.from(TABLE_STUDENTS).delete().eq('id',id);
+            if(error) throw error;
+            await logAudit('student_delete','student',id,{name});
+            toast.success('Student deleted');
+            await loadStudents(); renderStudents(); loadDashboardStats().then(renderStats);
+        }catch(e){ toast.error('Delete failed: '+e.message); }
+    });
 };
 
-// ── Document auto-rename on batch change ────────────────────
-async function renameDocumentsForBatch(student, batchCode) {
-  const { data: docs } = await supabase.from('registration_documents').select('*').eq('student_id', student.id);
-  if (!docs?.length) return;
+// Assign to batch
+window.openAssign=(studentId,projectCode)=>{
+    $('assign-student-id').value=studentId;
+    const s=allStudents.find(x=>x.id===studentId);
+    $('assign-batch-title').textContent='Assign '+esc(s?.full_name||'Student')+' to Batch';
+    // Filter batches by same project
+    const batches=allBatches.filter(b=>b.project_code===projectCode&&b.status!=='cancelled');
+    $('assign-batch-select').innerHTML='<option value="">Choose a batch\u2026</option>'+
+        batches.map(b=>`<option value="${b.id}">${esc(b.batch_code)} &mdash; ${esc(b.location_name)} (${b.total_students||0}/${b.capacity||'?'})</option>`).join('');
+    $('assign-batch-info').textContent='';
+    openModal('modal-assign-batch');
+};
+$('assign-batch-select').addEventListener('change',e=>{
+    const b=allBatches.find(x=>x.id===e.target.value);
+    $('assign-batch-info').textContent=b?`Center: ${b.center_name||'\u2014'} | Start: ${fmtDate(b.start_date)} | Trainer: ${b.trainer_name||'\u2014'}`:'';
+});
+$('btn-confirm-assign').addEventListener('click',async()=>{
+    const studentId=$('assign-student-id').value, batchId=$('assign-batch-select').value;
+    if(!batchId){toast.error('Please select a batch.');return;}
+    const btn=$('btn-confirm-assign'); btn.disabled=true; btn.textContent='Assigning\u2026';
+    try{
+        const s=allStudents.find(x=>x.id===studentId);
+        const b=allBatches.find(x=>x.id===batchId);
+        // Upsert assignment
+        const {error:aE}=await supabase.from(TABLE_BATCH_ASSIGNMENTS).upsert(
+            {student_id:studentId,batch_id:batchId,assigned_by:getUser()},{onConflict:'student_id'});
+        if(aE) throw aE;
+        // History
+        await supabase.from(TABLE_BATCH_HISTORY).insert([{student_id:studentId,from_batch_id:s?.batch_id||null,to_batch_id:batchId,action:s?.batch_id?'reassigned':'assigned',performed_by:getUser()}]);
+        // Update student status
+        await supabase.from(TABLE_STUDENTS).update({registration_status:'batch_assigned'}).eq('id',studentId);
+        // Rename registration documents to include batch code
+        if(s?.ma_foi_id && b?.batch_code){
+            await renameRegDocs(studentId, s.ma_foi_id, b.batch_code, s.full_name);
+        }
+        await logAudit('batch_assign','student',studentId,{batch:b?.batch_code});
+        toast.success('Assigned to '+b?.batch_code);
+        closeModal('modal-assign-batch');
+        await loadStudents(); await loadBatches(); renderStudents(); renderBatches();
+    }catch(e){ toast.error('Assign failed: '+e.message); }
+    finally{ btn.disabled=false; btn.textContent='Assign'; }
+});
 
-  const folder = student.ma_foi_id || `bajaj/${student.id.replace(/-/g,'').slice(0,8).toUpperCase()}`;
-  const STORAGE_BUCKET = 'documents';
-
-  for (const doc of docs) {
-    const ext = doc.file_name.slice(doc.file_name.lastIndexOf('.'));
-    const newName = student.ma_foi_id
-      ? `${student.ma_foi_id}_${batchCode}_${doc.doc_label}_${student.full_name}${ext}`
-      : `${batchCode}_${doc.doc_label}_${student.full_name}${ext}`;
-    const oldPath = doc.storage_path;
-    const newPath = `${folder}/${newName}`;
-    if (oldPath === newPath) continue;
-
-    try {
-      const { data: fileData } = await supabase.storage.from(STORAGE_BUCKET).download(oldPath);
-      if (!fileData) continue;
-      const { error: upErr } = await supabase.storage.from(STORAGE_BUCKET).upload(newPath, fileData, { upsert: true, contentType: fileData.type });
-      if (upErr) { console.warn('Rename upload failed:', upErr); continue; }
-      const { data: { publicUrl } } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(newPath);
-      await supabase.from('registration_documents').update({ file_name: newName, storage_path: newPath, public_url: publicUrl }).eq('id', doc.id);
-      await supabase.storage.from(STORAGE_BUCKET).remove([oldPath]);
-    } catch (e) {
-      console.warn('[Admin] Document rename failed (non-fatal):', e);
+// Rename all registration docs when batch is assigned/changed
+async function renameRegDocs(studentId, maFoiId, batchCode, fullName){
+    const {data:docs}=await supabase.from(TABLE_REGISTRATION_DOCS).select('*').eq('student_id',studentId);
+    if(!docs?.length) return;
+    for(const doc of docs){
+        const ext='.'+doc.file_name.split('.').pop();
+        const newName=buildRegDocFilename(maFoiId, batchCode, doc.doc_label, fullName, ext);
+        const oldPath=doc.storage_path;
+        const newPath='nasscom/'+maFoiId+'/'+newName;
+        if(oldPath===newPath) continue;
+        try{
+            // Copy to new path, then delete old
+            const {data:fileData}=await supabase.storage.from(STORAGE_BUCKET).download(oldPath);
+            if(fileData){
+                await supabase.storage.from(STORAGE_BUCKET).upload(newPath,fileData,{upsert:true});
+                await supabase.storage.from(STORAGE_BUCKET).remove([oldPath]);
+                const {data:{publicUrl}}=supabase.storage.from(STORAGE_BUCKET).getPublicUrl(newPath);
+                await supabase.from(TABLE_REGISTRATION_DOCS).update({file_name:newName,storage_path:newPath,public_url:publicUrl}).eq('id',doc.id);
+            }
+        }catch(e){console.warn('[Admin] Doc rename failed for',doc.file_name,e);}
     }
-  }
 }
 
-// ════════════════════════════════════════════════════════════
-// BATCH MANAGEMENT
-// ════════════════════════════════════════════════════════════
+// Unassign student from batch
+window.unassignStudent=async(studentId,name)=>{
+    showConfirm('Unassign from Batch',`Remove <strong>${esc(name)}</strong> from their current batch?`,async()=>{
+        try{
+            const s=allStudents.find(x=>x.id===studentId);
+            const {error}=await supabase.from(TABLE_BATCH_ASSIGNMENTS).delete().eq('student_id',studentId);
+            if(error) throw error;
+            await supabase.from(TABLE_BATCH_HISTORY).insert([{student_id:studentId,from_batch_id:s?.batch_id||null,to_batch_id:null,action:'removed',performed_by:getUser()}]);
+            await supabase.from(TABLE_STUDENTS).update({registration_status:'registered'}).eq('id',studentId);
+            await logAudit('batch_unassign','student',studentId,{name});
+            toast.success(name+' unassigned');
+            await loadStudents(); await loadBatches(); renderStudents(); renderBatches();
+        }catch(e){ toast.error('Unassign failed: '+e.message); }
+    },'Unassign');
+};
 
-document.getElementById('batch-search').addEventListener('input', e => {
-  batchSearch = e.target.value.toLowerCase();
-  renderBatches();
+// ══════════════════════════════════════════════════════════
+// BATCHES
+// ══════════════════════════════════════════════════════════
+let batchFilter='all';
+document.querySelectorAll('.tab-btn[data-batch-tab]').forEach(b=>{
+    b.addEventListener('click',()=>{
+        document.querySelectorAll('.tab-btn[data-batch-tab]').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active'); batchFilter=b.dataset.batchTab; renderBatches();
+    });
 });
 
-function renderBatches() {
-  let rows = allBatches;
-  if (batchSearch) rows = rows.filter(b => b.batch_code.toLowerCase().includes(batchSearch) || (b.program_name||'').toLowerCase().includes(batchSearch));
-
-  const tbody = document.getElementById('batches-tbody');
-  if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="8" class="tbl-empty">No batches found. Click "Create Batch" to add one.</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = rows.map(b => {
-    const statusBadge = {
-      upcoming:  'badge-blue', active: 'badge-green', completed: 'badge-gray', cancelled: 'badge-red'
-    }[b.status] || 'badge-gray';
-    const capPct = b.capacity ? Math.round((b.total_students / b.capacity) * 100) : null;
-    return `
-    <tr>
+function renderBatches(){
+    let rows=allBatches;
+    if(batchFilter==='nasscom') rows=rows.filter(b=>b.project_code==='nasscom');
+    else if(batchFilter==='bajaj') rows=rows.filter(b=>b.project_code==='bajaj');
+    else if(batchFilter==='active') rows=rows.filter(b=>b.status==='active');
+    const tbody=$('batches-tbody');
+    if(!rows.length){tbody.innerHTML=`<tr><td colspan="9" class="tbl-empty">No batches found.</td></tr>`;return;}
+    const stBadge={upcoming:'badge-amber',active:'badge-green',completed:'badge-gray',cancelled:'badge-red'};
+    tbody.innerHTML=rows.map(b=>`<tr>
       <td style="font-weight:600">${esc(b.batch_code)}</td>
-      <td><span class="badge ${b.project_code==='nasscom'?'badge-blue':'badge-amber'}">${esc(b.project_name)}</span></td>
+      <td><span class="badge badge-${b.project_code==='nasscom'?'nasscom':'bajaj'}">${esc(b.project_name)}</span></td>
       <td>${esc(b.program_name)}</td>
       <td>${esc(b.location_name)}</td>
-      <td><span class="badge ${statusBadge}">${esc(b.status)}</span></td>
-      <td><span class="badge badge-purple">${b.total_students||0} students</span></td>
-      <td style="font-size:12px;color:var(--text-secondary)">${b.capacity ? `${b.total_students||0}/${b.capacity}${capPct!=null?` (${capPct}%)`:''}` : '—'}</td>
-      <td style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="tbl-btn" onclick='openBatchDetail("${b.batch_id}")'>View</button>
-        <button class="tbl-btn" onclick='openEditBatch("${b.batch_id}")'>Edit</button>
-        <button class="tbl-btn tbl-btn--danger" onclick='confirmDeleteBatch("${b.batch_id}")'>Delete</button>
+      <td>${esc(b.center_name||'\u2014')}</td>
+      <td><span class="badge ${stBadge[b.status]||'badge-gray'}">${esc(b.status)}</span></td>
+      <td>${b.total_students||0}</td>
+      <td>${b.capacity||'\u2014'}</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap">
+        <button class="tbl-btn" onclick="viewBatch('${b.id}')">View</button>
+        <button class="tbl-btn" onclick="editBatch('${b.id}')">Edit</button>
+        <button class="tbl-btn tbl-btn--danger" onclick="deleteBatch('${b.id}','${esc(b.batch_code)}')">Delete</button>
       </td>
-    </tr>`;
-  }).join('');
+    </tr>`).join('');
 }
 
-// ── Create / Edit Batch Modal ────────────────────────────────
-function populateProjectDropdown() {
-  const sel = document.getElementById('nb-project');
-  sel.innerHTML = '<option value="">Select Project</option>' +
-    allProjects.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
-}
-
-document.getElementById('nb-project').addEventListener('change', () => {
-  const projectId = document.getElementById('nb-project').value;
-  const progSel = document.getElementById('nb-program');
-  const locSel  = document.getElementById('nb-location');
-  if (!projectId) {
-    progSel.disabled = true; progSel.innerHTML = '<option value="">Select project first</option>';
-    locSel.disabled = true;  locSel.innerHTML  = '<option value="">Select project first</option>';
-    return;
-  }
-  const programs  = allPrograms.filter(p => p.project_id === projectId);
-  const locations = allLocations.filter(l => l.project_id === projectId);
-  progSel.disabled = false;
-  progSel.innerHTML = '<option value="">Select Program</option>' + programs.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
-  locSel.disabled = false;
-  locSel.innerHTML = '<option value="">Select Location</option>' + locations.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+// Create batch
+$('btn-create-batch').addEventListener('click',()=>{
+    $('batch-id').value=''; $('batch-modal-title').textContent='Create Batch';
+    ['batch-project','batch-program','batch-location','batch-center','batch-trainer','batch-notes'].forEach(id=>$(id).value='');
+    ['batch-number','batch-capacity'].forEach(id=>$(id).value='');
+    $('batch-status').value='upcoming'; $('batch-start').value=''; $('batch-end').value='';
+    $('batch-code-preview').textContent='B??_???_???';
+    $('batch-number-err').textContent='';
+    openModal('modal-batch');
 });
 
-document.getElementById('btn-create-batch').addEventListener('click', () => {
-  document.getElementById('batch-modal-title').textContent = 'Create New Batch';
-  document.getElementById('btn-save-batch').textContent = 'Create Batch';
-  document.getElementById('nb-id').value = '';
-  ['nb-code','nb-name','nb-center','nb-capacity','nb-start','nb-end','nb-trainer','nb-notes'].forEach(id => { document.getElementById(id).value = ''; });
-  document.getElementById('nb-status').value = 'upcoming';
-  populateProjectDropdown();
-  document.getElementById('nb-project').value = '';
-  document.getElementById('nb-program').disabled = true;
-  document.getElementById('nb-program').innerHTML = '<option value="">Select project first</option>';
-  document.getElementById('nb-location').disabled = true;
-  document.getElementById('nb-location').innerHTML = '<option value="">Select project first</option>';
-  ['nb-project-error','nb-program-error','nb-location-error','nb-code-error'].forEach(id => { document.getElementById(id).textContent = ''; });
-  openModal('modal-batch');
+// Cascade dropdowns in batch modal
+$('batch-project').addEventListener('change',e=>{
+    const pcode=e.target.value;
+    const proj=allProjects.find(p=>p.code===pcode);
+    // Programs
+    const progs=allPrograms.filter(p=>p.project_id===proj?.id);
+    $('batch-program').innerHTML='<option value="">Select\u2026</option>'+progs.map(p=>`<option value="${p.code}">${esc(p.name)}</option>`).join('');
+    // Locations
+    const locs=allLocations.filter(l=>l.project_id===proj?.id);
+    $('batch-location').innerHTML='<option value="">Select\u2026</option>'+locs.map(l=>`<option value="${l.id}:${l.code}:${l.name}">${esc(l.name)}</option>`).join('');
+    $('batch-center').innerHTML='<option value="">Select location first</option>';
+    updateBatchCodePreview();
 });
+$('batch-location').addEventListener('change',async e=>{
+    const parts=(e.target.value||'').split(':');
+    const locId=parts[0];
+    const proj=allProjects.find(p=>p.code===$('batch-project').value);
+    const centers=allCenters.filter(c=>c.location_id===locId&&c.project_id===proj?.id);
+    $('batch-center').innerHTML='<option value="">Select\u2026</option>'+centers.map(c=>`<option value="${c.code}:${c.id}:${c.name}">${esc(c.code)} &mdash; ${esc(c.name)}</option>`).join('');
+    updateBatchCodePreview();
+});
+['batch-program','batch-center','batch-number'].forEach(id=>$(id).addEventListener('change',updateBatchCodePreview));
+['batch-number'].forEach(id=>$(id).addEventListener('input',updateBatchCodePreview));
 
-window.openEditBatch = (batchId) => {
-  const b = allBatches.find(x => x.id === batchId || x.batch_id === batchId);
-  if (!b) return;
-  document.getElementById('batch-modal-title').textContent = 'Edit Batch';
-  document.getElementById('btn-save-batch').textContent = 'Save Changes';
-  document.getElementById('nb-id').value = b.batch_id || b.id;
-  document.getElementById('nb-code').value = b.batch_code || '';
-  document.getElementById('nb-name').value = b.batch_name || '';
-  document.getElementById('nb-center').value = b.center_name || '';
-  document.getElementById('nb-capacity').value = b.capacity || '';
-  document.getElementById('nb-status').value = b.status || 'upcoming';
-  document.getElementById('nb-start').value = b.start_date || '';
-  document.getElementById('nb-end').value = b.end_date || '';
-  document.getElementById('nb-trainer').value = b.trainer_name || '';
-  document.getElementById('nb-notes').value = b.notes || '';
-
-  populateProjectDropdown();
-  const project = allProjects.find(p => p.code === b.project_code);
-  if (project) {
-    document.getElementById('nb-project').value = project.id;
-    const programs  = allPrograms.filter(p => p.project_id === project.id);
-    const locations = allLocations.filter(l => l.project_id === project.id);
-    const progSel = document.getElementById('nb-program');
-    progSel.disabled = false;
-    progSel.innerHTML = '<option value="">Select Program</option>' + programs.map(p => `<option value="${p.id}" ${p.name===b.program_name?'selected':''}>${esc(p.name)}</option>`).join('');
-    const locSel = document.getElementById('nb-location');
-    locSel.disabled = false;
-    locSel.innerHTML = '<option value="">Select Location</option>' + locations.map(l => `<option value="${l.id}" ${l.name===b.location_name?'selected':''}>${esc(l.name)}</option>`).join('');
-  }
-  ['nb-project-error','nb-program-error','nb-location-error','nb-code-error'].forEach(id => { document.getElementById(id).textContent = ''; });
-  openModal('modal-batch');
-};
-
-document.getElementById('btn-save-batch').addEventListener('click', async () => {
-  const id        = document.getElementById('nb-id').value;
-  const projectId = document.getElementById('nb-project').value;
-  const programId = document.getElementById('nb-program').value;
-  const locationId = document.getElementById('nb-location').value;
-  const code      = document.getElementById('nb-code').value.trim();
-
-  let ok = true;
-  const setE = (eid, msg) => { document.getElementById(eid).textContent = msg; if (msg) ok = false; };
-  setE('nb-project-error',  !projectId  ? 'Project is required.'  : '');
-  setE('nb-program-error',  !programId  ? 'Program is required.'  : '');
-  setE('nb-location-error', !locationId ? 'Location is required.' : '');
-  setE('nb-code-error',     !code       ? 'Batch code is required.' : '');
-  if (!ok) return;
-
-  const payload = {
-    project_id: projectId, program_id: programId, location_id: locationId,
-    batch_code: code,
-    batch_name: document.getElementById('nb-name').value.trim() || null,
-    center_name: document.getElementById('nb-center').value.trim() || null,
-    capacity: document.getElementById('nb-capacity').value ? parseInt(document.getElementById('nb-capacity').value) : null,
-    status: document.getElementById('nb-status').value,
-    start_date: document.getElementById('nb-start').value || null,
-    end_date: document.getElementById('nb-end').value || null,
-    trainer_name: document.getElementById('nb-trainer').value.trim() || null,
-    notes: document.getElementById('nb-notes').value.trim() || null,
-  };
-
-  const btn = document.getElementById('btn-save-batch');
-  btn.disabled = true; btn.textContent = id ? 'Saving…' : 'Creating…';
-
-  try {
-    if (id) {
-      const { error } = await supabase.from(TABLE_BATCHES).update(payload).eq('id', id);
-      if (error) throw error;
-      await logAudit('batch_edit', 'batch', id, { batch_code: code });
-      toast.success(`Batch "${code}" updated`);
+function updateBatchCodePreview(){
+    const prog=$('batch-program').value;
+    const num=parseInt($('batch-number').value)||null;
+    const centerParts=($('batch-center').value||'').split(':');
+    const centerCode=centerParts[0]||'???';
+    if(prog&&num&&centerCode!=='???'){
+        $('batch-code-preview').textContent=buildBatchCode(num,prog,centerCode);
     } else {
-      const { error } = await supabase.from(TABLE_BATCHES).insert([payload]);
-      if (error) throw error;
-      await logAudit('batch_create', 'batch', null, { batch_code: code });
-      toast.success(`Batch "${code}" created`);
+        $('batch-code-preview').textContent='B??_???_???';
     }
-    closeModal('modal-batch');
-    await loadBatches();
-    await loadDashboardStats();
-    renderBatches();
-  } catch (err) {
-    toast.error('Save failed: ' + err.message);
-  } finally {
-    btn.disabled = false; btn.textContent = id ? 'Save Changes' : 'Create Batch';
-  }
+}
+
+$('btn-save-batch').addEventListener('click',async()=>{
+    const id=$('batch-id').value;
+    const pcode=$('batch-project').value, prog=$('batch-program').value;
+    const locVal=$('batch-location').value, cenVal=$('batch-center').value;
+    const num=parseInt($('batch-number').value)||null;
+    $('batch-number-err').textContent='';
+    if(!pcode||!prog||!locVal||!cenVal||!num){toast.error('Fill in all required fields.');return;}
+    const locParts=locVal.split(':');
+    const cenParts=cenVal.split(':');
+    const proj=allProjects.find(p=>p.code===pcode);
+    const progObj=allPrograms.find(p=>p.project_id===proj?.id&&p.code===prog);
+    const batchCode=buildBatchCode(num,prog,cenParts[0]);
+    const btn=$('btn-save-batch'); btn.disabled=true; btn.textContent='Saving\u2026';
+    try{
+        const payload={
+            project_id:proj?.id, program_id:progObj?.id,
+            location_id:locParts[0], center_id:cenParts[1]||null,
+            batch_number:num, batch_code:batchCode, center_name:cenParts[2]||null,
+            capacity:$('batch-capacity').value||null, status:$('batch-status').value,
+            trainer_name:$('batch-trainer').value||null, start_date:$('batch-start').value||null,
+            end_date:$('batch-end').value||null, notes:$('batch-notes').value||null,
+        };
+        if(id){
+            const {error}=await supabase.from(TABLE_BATCHES).update(payload).eq('id',id);
+            if(error) throw error;
+            await logAudit('batch_edit','batch',id,{batchCode});
+            toast.success('Batch updated');
+        } else {
+            const {error}=await supabase.from(TABLE_BATCHES).insert([payload]);
+            if(error) throw error;
+            await logAudit('batch_create','batch',null,{batchCode});
+            toast.success('Batch '+batchCode+' created');
+        }
+        closeModal('modal-batch');
+        await loadBatches(); renderBatches();
+    }catch(e){ toast.error('Save failed: '+e.message.includes('unique')?' Batch code already exists.':e.message); }
+    finally{ btn.disabled=false; btn.textContent='Save Batch'; }
 });
 
-// ── Delete Batch ──────────────────────────────────────────────
-window.confirmDeleteBatch = (batchId) => {
-  const b = allBatches.find(x => x.batch_id === batchId || x.id === batchId);
-  if (!b) return;
-  if (b.total_students > 0) {
-    toast.warning(`Cannot delete "${b.batch_code}" — ${b.total_students} student(s) still assigned. Remove or move them first.`);
-    return;
-  }
-  showConfirm(
-    'Delete Batch',
-    `Are you sure you want to permanently delete batch <strong>${esc(b.batch_code)}</strong>? This cannot be undone.`,
-    async () => {
-      try {
-        const { error } = await supabase.from(TABLE_BATCHES).delete().eq('id', b.batch_id || b.id);
-        if (error) throw error;
-        await logAudit('batch_delete', 'batch', b.batch_id || b.id, { batch_code: b.batch_code });
-        toast.success(`Batch "${b.batch_code}" deleted`);
-        await loadBatches();
-        await loadDashboardStats();
-        renderBatches();
-      } catch (err) {
-        toast.error('Delete failed: ' + err.message);
-      }
-    }
-  );
+window.editBatch=async(id)=>{
+    const b=allBatches.find(x=>x.id===id); if(!b) return;
+    $('batch-id').value=id; $('batch-modal-title').textContent='Edit Batch';
+    $('batch-project').value=b.project_code||'';
+    // Trigger cascade
+    $('batch-project').dispatchEvent(new Event('change'));
+    setTimeout(()=>{
+        $('batch-program').value=b.program_code||'';
+        // Set location (format: id:code:name)
+        // location option value format: "UUID:CODE:Name"
+        Array.from($('batch-location').options).forEach(opt=>{
+            if(b.location_id && opt.value.startsWith(b.location_id+':')) $('batch-location').value=opt.value;
+            else if(!b.location_id && opt.value.includes(':'+b.location_name)) $('batch-location').value=opt.value;
+        });
+        $('batch-location').dispatchEvent(new Event('change'));
+        setTimeout(()=>{
+            // center option value format: "CODE:UUID:Name"
+            Array.from($('batch-center').options).forEach(opt=>{if(opt.value.startsWith(b.center_code+':'))$('batch-center').value=opt.value;});
+            $('batch-number').value=b.batch_number||'';
+            $('batch-capacity').value=b.capacity||'';
+            $('batch-status').value=b.status||'upcoming';
+            $('batch-trainer').value=b.trainer_name||'';
+            $('batch-start').value=b.start_date||'';
+            $('batch-end').value=b.end_date||'';
+            $('batch-notes').value=b.notes||'';
+            updateBatchCodePreview();
+        },100);
+    },100);
+    openModal('modal-batch');
 };
 
-// ── Batch Detail Modal (view students, add/remove, export) ────
-let currentBatchDetail = null;
-
-window.openBatchDetail = async (batchId) => {
-  const b = allBatches.find(x => x.batch_id === batchId || x.id === batchId);
-  if (!b) return;
-  currentBatchDetail = b;
-  document.getElementById('bd-title').textContent = b.batch_code;
-  document.getElementById('bd-subtitle').textContent = `${b.project_name} · ${b.program_name} · ${b.location_name}`;
-  openModal('modal-batch-detail');
-  await refreshBatchDetail();
+window.deleteBatch=async(id,code)=>{
+    const assigned=allStudents.filter(s=>s.batch_id===id).length;
+    if(assigned>0){toast.error(`Cannot delete — ${assigned} student(s) are assigned to this batch. Unassign them first.`);return;}
+    showConfirm('Delete Batch',`Delete batch <strong>${esc(code)}</strong>?`,async()=>{
+        try{
+            const {error}=await supabase.from(TABLE_BATCHES).delete().eq('id',id);
+            if(error) throw error;
+            await logAudit('batch_delete','batch',id,{code});
+            toast.success('Batch deleted');
+            await loadBatches(); renderBatches();
+        }catch(e){ toast.error('Delete failed: '+e.message); }
+    });
 };
 
-async function refreshBatchDetail() {
-  if (!currentBatchDetail) return;
-  const b = currentBatchDetail;
-  const batchId = b.batch_id || b.id;
-  const inBatch = allStudents.filter(s => s.batch_id === batchId);
-  const placedCount = inBatch.filter(s => s.placement_status === 'placed').length;
-
-  document.getElementById('bd-stats').innerHTML = `
-    <div class="badge badge-purple">${inBatch.length} Total</div>
-    <div class="badge badge-green">${placedCount} Placed</div>
-    <div class="badge ${b.capacity ? 'badge-blue' : 'badge-gray'}">${b.capacity ? `Capacity: ${inBatch.length}/${b.capacity}` : 'No capacity set'}</div>`;
-
-  const listEl = document.getElementById('bd-student-list');
-  if (!inBatch.length) {
-    listEl.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:8px 0">No students assigned to this batch yet.</div>';
-  } else {
-    listEl.innerHTML = inBatch.map(s => `
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;background:var(--bg);border-radius:var(--r-md);border:1px solid var(--border)">
-        <div style="min-width:0">
-          <div style="font-size:13.5px;font-weight:600;color:var(--text)">${esc(s.full_name)}</div>
-          <div style="font-size:12px;color:var(--text-muted)">${s.ma_foi_id||s.phone} · ${esc(s.program_name)}</div>
+window.viewBatch=async(id)=>{
+    const b=allBatches.find(x=>x.id===id); if(!b) return;
+    const students=allStudents.filter(s=>s.batch_id===id);
+    $('batch-detail-title').textContent=b.batch_code;
+    $('batch-detail-sub').textContent=`${b.program_name} | ${b.location_name} | ${b.total_students||0}/${b.capacity||'?'} students`;
+    $('batch-detail-body').innerHTML=
+        `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+        ${[['Center',b.center_name],['Trainer',b.trainer_name],['Start',fmtDate(b.start_date)],['End',fmtDate(b.end_date)],['Status',b.status]].map(([k,v])=>`<div class="profile-row"><div class="profile-row__label">${k}</div><div class="profile-row__val">${esc(v||'\u2014')}</div></div>`).join('')}
         </div>
-        <button class="tbl-btn tbl-btn--danger" style="flex-shrink:0" onclick='removeFromBatchInDetail("${s.id}")'>Remove</button>
-      </div>`).join('');
-  }
-
-  const notInBatch = allStudents.filter(s => s.project_code === b.project_code && s.batch_id !== batchId);
-  const addSel = document.getElementById('bd-add-select');
-  addSel.innerHTML = '<option value="">Select a student to add…</option>' +
-    notInBatch.map(s => `<option value="${s.id}">${esc(s.full_name)} (${s.ma_foi_id||s.phone})</option>`).join('');
-}
-
-window.removeFromBatchInDetail = async (studentId) => {
-  const s = allStudents.find(x => x.id === studentId);
-  if (!s || !currentBatchDetail) return;
-  try {
-    await supabase.from(TABLE_BATCH_ASSIGNMENTS).delete().eq('student_id', studentId);
-    await supabase.from(TABLE_BATCH_HISTORY).insert([{
-      student_id: studentId, from_batch_id: currentBatchDetail.batch_id || currentBatchDetail.id, to_batch_id: null,
-      action: 'removed', performed_by: getAuthUsername(),
-    }]);
-    await supabase.from(TABLE_STUDENTS).update({ registration_status: 'registered' }).eq('id', studentId);
-    toast.success(`${s.full_name} removed from batch`);
-    await Promise.all([loadStudents(), loadBatches()]);
-    await loadDashboardStats();
-    renderStudents(); renderBatches();
-    await refreshBatchDetail();
-  } catch (err) {
-    toast.error('Remove failed: ' + err.message);
-  }
+        <div style="font-weight:600;margin-bottom:8px">Students (${students.length})</div>`+
+        (students.length?`<table class="data-table"><thead><tr><th>Name</th><th>Ma Foi ID</th><th>Phone</th><th>Docs</th></tr></thead><tbody>
+        ${students.map(s=>`<tr><td>${esc(s.full_name)}</td><td>${s.ma_foi_id||'\u2014'}</td><td>${s.phone}</td><td>${s.docs_uploaded||0}</td></tr>`).join('')}
+        </tbody></table>`:'<div style="text-align:center;color:var(--text-muted);padding:20px">No students assigned yet.</div>');
+    openModal('modal-batch-detail');
 };
 
-document.getElementById('btn-bd-add').addEventListener('click', async () => {
-  const studentId = document.getElementById('bd-add-select').value;
-  if (!studentId || !currentBatchDetail) { toast.error('Please select a student to add.'); return; }
-  const student = allStudents.find(s => s.id === studentId);
-  const batchId = currentBatchDetail.batch_id || currentBatchDetail.id;
-
-  const btn = document.getElementById('btn-bd-add');
-  btn.disabled = true; btn.textContent = 'Adding…';
-
-  try {
-    await supabase.from(TABLE_BATCH_ASSIGNMENTS).delete().eq('student_id', studentId);
-    const { error } = await supabase.from(TABLE_BATCH_ASSIGNMENTS).insert([{ student_id: studentId, batch_id: batchId }]);
-    if (error) throw error;
-    await supabase.from(TABLE_BATCH_HISTORY).insert([{
-      student_id: studentId, from_batch_id: student.batch_id || null, to_batch_id: batchId,
-      action: student.batch_id ? 'reassigned' : 'assigned', performed_by: getAuthUsername(),
-    }]);
-    await supabase.from(TABLE_STUDENTS).update({ registration_status: 'batch_assigned' }).eq('id', studentId);
-    await renameDocumentsForBatch(student, currentBatchDetail.batch_code);
-
-    toast.success(`${student.full_name} added to ${currentBatchDetail.batch_code}`);
-    await Promise.all([loadStudents(), loadBatches()]);
-    await loadDashboardStats();
-    renderStudents(); renderBatches();
-    await refreshBatchDetail();
-  } catch (err) {
-    toast.error('Add failed: ' + err.message);
-  } finally {
-    btn.disabled = false; btn.textContent = 'Add';
-  }
-});
-
-document.getElementById('btn-export-batch').addEventListener('click', () => {
-  if (!currentBatchDetail) return;
-  const batchId = currentBatchDetail.batch_id || currentBatchDetail.id;
-  const inBatch = allStudents.filter(s => s.batch_id === batchId);
-  if (!inBatch.length) { toast.warning('No students to export.'); return; }
-
-  const headers = ['Ma Foi ID','Full Name','Email','Phone','Project','Program','Location','Registration Status','Placement Status'];
-  const rows = inBatch.map(s => [
-    s.ma_foi_id || '', s.full_name, s.email, s.phone, s.project_name, s.program_name, s.location_name,
-    s.registration_status, s.placement_status,
-  ]);
-  const csv = [headers, ...rows].map(r => r.map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = Object.assign(document.createElement('a'), { href: url, download: `${currentBatchDetail.batch_code}_students.csv` });
-  a.click();
-  URL.revokeObjectURL(url);
-  toast.success('Batch student list exported');
-});
-
-// ════════════════════════════════════════════════════════════
-// SHARED MODAL / CONFIRM HELPERS
-// ════════════════════════════════════════════════════════════
-
-window.closeModal = (id) => { document.getElementById(id).classList.remove('show'); };
-function openModal(id) { document.getElementById(id).classList.add('show'); }
-document.querySelectorAll('.modal-overlay').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('show'); });
-});
-
-let confirmCallback = null;
-function showConfirm(title, message, onConfirm, actionLabel = 'Delete') {
-  document.getElementById('confirm-title').textContent = title;
-  document.getElementById('confirm-message').innerHTML = message;
-  document.getElementById('btn-confirm-action').textContent = actionLabel;
-  confirmCallback = onConfirm;
-  openModal('modal-confirm');
-}
-document.getElementById('btn-confirm-action').addEventListener('click', async () => {
-  if (confirmCallback) {
-    const btn = document.getElementById('btn-confirm-action');
-    btn.disabled = true;
-    await confirmCallback();
-    btn.disabled = false;
-  }
-  closeModal('modal-confirm');
-});
-
-// ════════════════════════════════════════════════════════════
-// AUDIT LOG
-// ════════════════════════════════════════════════════════════
-
-async function logAudit(action, entityType, entityId, details) {
-  try {
-    await supabase.from('audit_logs').insert([{
-      admin_username: getAuthUsername(), action, entity_type: entityType,
-      entity_id: entityId, details,
-    }]);
-  } catch (e) {
-    console.warn('[Admin] Audit log failed (non-fatal):', e);
-  }
-}
-
-// ════════════════════════════════════════════════════════════
-// PLACEMENT MANAGEMENT
-// ════════════════════════════════════════════════════════════
-
-let placementFilter = { status: 'all', search: '' };
-
-document.querySelectorAll('.tab-btn[data-placement-tab]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn[data-placement-tab]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    placementFilter.status = btn.dataset.placementTab;
-    renderPlacements();
-  });
-});
-document.getElementById('placement-search').addEventListener('input', e => {
-  placementFilter.search = e.target.value.toLowerCase();
-  renderPlacements();
-});
-
-function populatePlacementStudentDropdown() {
-  const sel = document.getElementById('pl-student');
-  sel.innerHTML = '<option value="">Select Student…</option>' +
-    allStudents.map(s => `<option value="${s.id}">${esc(s.full_name)} (${s.ma_foi_id || s.phone}) — ${esc(s.project_name)}</option>`).join('');
-}
-
-function getFilteredPlacements() {
-  let rows = allPlacements;
-  if (placementFilter.status !== 'all') rows = rows.filter(p => p.placement_status === placementFilter.status);
-  if (placementFilter.search) {
-    const q = placementFilter.search;
-    rows = rows.filter(p => (p.student_name||'').toLowerCase().includes(q) || (p.company||'').toLowerCase().includes(q));
-  }
-  return rows;
-}
-
-function renderPlacements() {
-  const rows = getFilteredPlacements();
-  const tbody = document.getElementById('placements-tbody');
-  if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="10" class="tbl-empty">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
-      No placement records found.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = rows.map(p => {
-    const statusBadge = { active: 'badge-green', resigned: 'badge-amber', terminated: 'badge-red', absconded: 'badge-red' }[p.placement_status] || 'badge-gray';
-    const jdocCount = placementJDocCount(p.id);
-    const payCount  = placementPayslipCount(p.id);
-    return `
-    <tr>
-      <td style="font-weight:500">${esc(p.student_name)}</td>
-      <td>${p.batch_code ? `<span class="badge badge-green">${esc(p.batch_code)}</span>` : '<span class="badge badge-gray">—</span>'}</td>
-      <td style="font-weight:500">${esc(p.company)}</td>
-      <td>${esc(p.designation)||'—'}</td>
-      <td>${p.salary ? '₹'+Number(p.salary).toLocaleString('en-IN') : '—'}</td>
-      <td style="font-size:12px;color:var(--text-secondary)">${p.date_of_joining||'—'}</td>
-      <td><span class="badge ${statusBadge}">${esc(p.placement_status)}</span></td>
-      <td><button class="tbl-btn" onclick='openJoiningDocs("${p.id}")'>${jdocCount}/3</button></td>
-      <td><button class="tbl-btn" onclick='openPayslips("${p.id}")'>${payCount}/3</button></td>
-      <td style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="tbl-btn" onclick='openEditPlacement("${p.id}")'>Edit</button>
-        <button class="tbl-btn tbl-btn--danger" onclick='confirmDeletePlacement("${p.id}")'>Delete</button>
+// ══════════════════════════════════════════════════════════
+// CENTERS
+// ══════════════════════════════════════════════════════════
+function renderCenters(){
+    const tbody=$('centers-tbody');
+    if(!allCenters.length){tbody.innerHTML=`<tr><td colspan="6" class="tbl-empty">No centers yet. Add your first center above.</td></tr>`;return;}
+    tbody.innerHTML=allCenters.map(c=>`<tr>
+      <td style="font-weight:700;font-family:monospace;font-size:14px">${esc(c.code)}</td>
+      <td>${esc(c.name)}</td>
+      <td><span class="badge badge-${c.project_code==='nasscom'?'nasscom':'bajaj'}">${esc(c.project_name)}</span></td>
+      <td>${esc(c.location_name)}</td>
+      <td><span class="badge badge-${c.is_active?'green':'gray'}">${c.is_active?'Active':'Inactive'}</span></td>
+      <td style="display:flex;gap:4px">
+        <button class="tbl-btn" onclick="editCenter('${c.id}')">Edit</button>
+        <button class="tbl-btn tbl-btn--danger" onclick="deleteCenter('${c.id}','${esc(c.code)}')">Delete</button>
       </td>
-    </tr>`;
-  }).join('');
+    </tr>`).join('');
 }
 
-let jdocCountCache = {};
-let payCountCache  = {};
-function placementJDocCount(placementId) { return jdocCountCache[placementId] ?? 0; }
-function placementPayslipCount(placementId) { return payCountCache[placementId] ?? 0; }
-
-async function refreshPlacementDocCounts() {
-  const { data: jdocs } = await supabase.from(TABLE_PLACEMENT_DOCS).select('placement_id');
-  jdocCountCache = {};
-  (jdocs || []).forEach(d => { jdocCountCache[d.placement_id] = (jdocCountCache[d.placement_id] || 0) + 1; });
-
-  const { data: pays } = await supabase.from(TABLE_PAYSLIPS).select('placement_id');
-  payCountCache = {};
-  (pays || []).forEach(d => { payCountCache[d.placement_id] = (payCountCache[d.placement_id] || 0) + 1; });
-}
-
-// ── Add / Edit Placement ────────────────────────────────────────
-document.getElementById('btn-add-placement').addEventListener('click', () => {
-  document.getElementById('placement-modal-title').textContent = 'Add Placement Record';
-  document.getElementById('btn-save-placement').textContent = 'Save Placement';
-  document.getElementById('pl-id').value = '';
-  ['pl-company','pl-designation','pl-salary','pl-ctc','pl-doj','pl-offer-date','pl-probation','pl-feedback'].forEach(id => { document.getElementById(id).value = ''; });
-  document.getElementById('pl-student').value = '';
-  document.getElementById('pl-student').disabled = false;
-  document.getElementById('pl-status').value = 'active';
-  document.getElementById('pl-student-error').textContent = '';
-  document.getElementById('pl-company-error').textContent = '';
-  openModal('modal-placement');
+$('btn-create-center').addEventListener('click',()=>{
+    $('center-id').value=''; $('center-modal-title').textContent='Add Center';
+    ['center-project','center-location','center-code','center-name'].forEach(id=>$(id).value='');
+    ['center-project-err','center-location-err','center-code-err','center-name-err'].forEach(id=>$(id).textContent='');
+    openModal('modal-center');
 });
 
-window.openEditPlacement = (placementId) => {
-  const p = allPlacements.find(x => x.id === placementId);
-  if (!p) return;
-  document.getElementById('placement-modal-title').textContent = 'Edit Placement Record';
-  document.getElementById('btn-save-placement').textContent = 'Save Changes';
-  document.getElementById('pl-id').value = p.id;
-  document.getElementById('pl-student').value = p.student_id;
-  document.getElementById('pl-student').disabled = true; // student can't change after creation
-  document.getElementById('pl-company').value = p.company || '';
-  document.getElementById('pl-designation').value = p.designation || '';
-  document.getElementById('pl-salary').value = p.salary || '';
-  document.getElementById('pl-ctc').value = p.ctc_annual || '';
-  document.getElementById('pl-doj').value = p.date_of_joining || '';
-  document.getElementById('pl-offer-date').value = p.offer_letter_date || '';
-  document.getElementById('pl-probation').value = p.probation_period || '';
-  document.getElementById('pl-status').value = p.placement_status || 'active';
-  document.getElementById('pl-feedback').value = p.feedback || '';
-  document.getElementById('pl-student-error').textContent = '';
-  document.getElementById('pl-company-error').textContent = '';
-  openModal('modal-placement');
-};
-
-document.getElementById('btn-save-placement').addEventListener('click', async () => {
-  const id        = document.getElementById('pl-id').value;
-  const studentId = document.getElementById('pl-student').value;
-  const company   = document.getElementById('pl-company').value.trim();
-
-  let ok = true;
-  const setE = (eid, msg) => { document.getElementById(eid).textContent = msg; if (msg) ok = false; };
-  setE('pl-student-error', !studentId ? 'Please select a student.' : '');
-  setE('pl-company-error', !company   ? 'Company name is required.' : '');
-  if (!ok) return;
-
-  const btn = document.getElementById('btn-save-placement');
-  btn.disabled = true; btn.textContent = id ? 'Saving…' : 'Saving…';
-
-  try {
-    if (id) {
-      const { error } = await supabase.from(TABLE_PLACEMENTS).update({
-        company,
-        designation: document.getElementById('pl-designation').value.trim() || null,
-        salary: document.getElementById('pl-salary').value || null,
-        ctc_annual: document.getElementById('pl-ctc').value || null,
-        date_of_joining: document.getElementById('pl-doj').value || null,
-        offer_letter_date: document.getElementById('pl-offer-date').value || null,
-        probation_period: document.getElementById('pl-probation').value.trim() || null,
-        placement_status: document.getElementById('pl-status').value,
-        feedback: document.getElementById('pl-feedback').value.trim() || null,
-      }).eq('id', id);
-      if (error) throw error;
-      await logAudit('placement_edit', 'placement', id, { company });
-      toast.success('Placement updated');
-    } else {
-      const student = allStudents.find(s => s.id === studentId);
-      if (!student) throw new Error('Selected student not found.');
-
-      const { error } = await supabase.from(TABLE_PLACEMENTS).insert([{
-        student_id: studentId,
-        batch_id: student.batch_id || null,
-        student_name: student.full_name,
-        phone: student.phone,
-        email: student.email,
-        program_name: student.program_name,
-        location_name: student.location_name,
-        company,
-        designation: document.getElementById('pl-designation').value.trim() || null,
-        salary: document.getElementById('pl-salary').value || null,
-        ctc_annual: document.getElementById('pl-ctc').value || null,
-        date_of_joining: document.getElementById('pl-doj').value || null,
-        offer_letter_date: document.getElementById('pl-offer-date').value || null,
-        probation_period: document.getElementById('pl-probation').value.trim() || null,
-        placement_status: document.getElementById('pl-status').value,
-        feedback: document.getElementById('pl-feedback').value.trim() || null,
-      }]);
-      if (error) throw error;
-
-      await supabase.from(TABLE_STUDENTS).update({ placement_status: 'placed', registration_status: 'placed' }).eq('id', studentId);
-      await logAudit('placement_create', 'placement', null, { student: student.full_name, company });
-      toast.success(`Placement recorded for ${student.full_name}`);
-    }
-
-    closeModal('modal-placement');
-    await Promise.all([loadPlacements(), loadStudents()]);
-    await refreshPlacementDocCounts();
-    await loadDashboardStats();
-    renderPlacements(); renderStudents();
-  } catch (err) {
-    toast.error('Save failed: ' + err.message);
-  } finally {
-    btn.disabled = false; btn.textContent = id ? 'Save Changes' : 'Save Placement';
-  }
+$('center-project').addEventListener('change',e=>{
+    const pcode=e.target.value;
+    const proj=allProjects.find(p=>p.code===pcode);
+    const locs=allLocations.filter(l=>l.project_id===proj?.id);
+    $('center-location').innerHTML='<option value="">Select\u2026</option>'+locs.map(l=>`<option value="${l.id}">${esc(l.name)}</option>`).join('');
 });
 
-window.confirmDeletePlacement = (placementId) => {
-  const p = allPlacements.find(x => x.id === placementId);
-  if (!p) return;
-  showConfirm(
-    'Delete Placement',
-    `Delete the placement record for <strong>${esc(p.student_name)}</strong> at <strong>${esc(p.company)}</strong>? All joining documents and payslips for this placement will also be deleted.`,
-    async () => {
-      try {
-        const { error } = await supabase.from(TABLE_PLACEMENTS).delete().eq('id', placementId);
-        if (error) throw error;
-        await logAudit('placement_delete', 'placement', placementId, { student: p.student_name, company: p.company });
-        toast.success('Placement record deleted');
-        await loadPlacements();
-        await refreshPlacementDocCounts();
-        await loadDashboardStats();
-        renderPlacements();
-      } catch (err) {
-        toast.error('Delete failed: ' + err.message);
-      }
-    }
-  );
-};
+$('center-code').addEventListener('input',e=>{ e.target.value=e.target.value.toUpperCase(); });
 
-// ── Joining Documents ───────────────────────────────────────────
-const JD_TYPES = [
-  { type: 'offer_letter',       label: 'Offer Letter' },
-  { type: 'email_confirmation', label: 'Email Confirmation' },
-  { type: 'id_card',            label: 'Employee ID Card' },
-];
-
-let currentJDPlacement = null;
-
-window.openJoiningDocs = async (placementId) => {
-  const p = allPlacements.find(x => x.id === placementId);
-  if (!p) return;
-  currentJDPlacement = p;
-  document.getElementById('jdocs-subtitle').textContent = `${p.student_name} · ${p.company}`;
-  openModal('modal-jdocs');
-  await refreshJoiningDocs();
-};
-
-async function refreshJoiningDocs() {
-  if (!currentJDPlacement) return;
-  const p = currentJDPlacement;
-  const { data: docs } = await supabase.from(TABLE_PLACEMENT_DOCS).select('*').eq('placement_id', p.id);
-  const docMap = {};
-  (docs || []).forEach(d => { docMap[d.doc_type] = d; });
-
-  document.getElementById('jdocs-body').innerHTML = JD_TYPES.map(jt => {
-    const existing = docMap[jt.type];
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
-      <div>
-        <div style="font-size:13.5px;font-weight:600;color:var(--text)">${jt.label}</div>
-        ${existing ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">✓ ${esc(existing.file_name)}</div>` : '<div style="font-size:12px;color:var(--text-muted)">Not uploaded</div>'}
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        ${existing ? `<a href="${existing.public_url}" target="_blank" rel="noopener" class="tbl-btn">View</a>` : ''}
-        <label class="tbl-btn tbl-btn--primary" style="cursor:pointer">
-          ${existing ? 'Replace' : 'Upload'}
-          <input type="file" style="display:none" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-            onchange="window.__uploadJoinDoc(this,'${p.id}','${jt.type}','${jt.label}')">
-        </label>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-window.__uploadJoinDoc = async (input, placementId, docType, docLabel) => {
-  const file = input.files?.[0];
-  if (!file) return;
-  const p = allPlacements.find(x => x.id === placementId);
-  if (!p) return;
-
-  // Resolve batch code + ma_foi_id for naming (Nasscom only gets a Ma Foi ID prefix)
-  const student = allStudents.find(s => s.id === p.student_id);
-  const batchCode = p.batch_code || 'NoBatch';
-  const ext = file.name.slice(file.name.lastIndexOf('.'));
-  const fileName = student?.ma_foi_id
-    ? `${student.ma_foi_id}_${batchCode}_${docLabel}_${p.student_name}_${p.company}${ext}`
-    : `${batchCode}_${docLabel}_${p.student_name}_${p.company}${ext}`;
-  const path = `placements/${placementId}/${fileName}`;
-
-  const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, { upsert: true, contentType: file.type });
-  if (error) { toast.error('Upload failed: ' + error.message); return; }
-  const { data: { publicUrl } } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-  await supabase.from(TABLE_PLACEMENT_DOCS).upsert(
-    { placement_id: placementId, doc_type: docType, file_name: fileName, storage_path: path, public_url: publicUrl },
-    { onConflict: 'placement_id,doc_type' }
-  );
-  toast.success(`${docLabel} uploaded`);
-  await refreshJoiningDocs();
-  await refreshPlacementDocCounts();
-  renderPlacements();
-};
-
-// ── Payslips ─────────────────────────────────────────────────────
-let currentPayslipPlacement = null;
-
-window.openPayslips = async (placementId) => {
-  const p = allPlacements.find(x => x.id === placementId);
-  if (!p) return;
-  currentPayslipPlacement = p;
-  document.getElementById('payslips-subtitle').textContent = `${p.student_name} · ${p.company}`;
-  openModal('modal-payslips');
-  await refreshPayslips();
-};
-
-async function refreshPayslips() {
-  if (!currentPayslipPlacement) return;
-  const p = currentPayslipPlacement;
-  const { data: slips } = await supabase.from(TABLE_PAYSLIPS).select('*').eq('placement_id', p.id);
-  const slipMap = {};
-  (slips || []).forEach(s => { slipMap[s.month_number] = s; });
-
-  document.getElementById('payslips-body').innerHTML = [1, 2, 3].map(m => {
-    const existing = slipMap[m];
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
-      <div>
-        <div style="font-size:13.5px;font-weight:600;color:var(--text)">Month ${m} Payslip</div>
-        ${existing ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">✓ ${esc(existing.file_name)}</div>` : '<div style="font-size:12px;color:var(--text-muted)">Not uploaded</div>'}
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        ${existing ? `<a href="${existing.public_url}" target="_blank" rel="noopener" class="tbl-btn">View</a>` : ''}
-        <label class="tbl-btn tbl-btn--primary" style="cursor:pointer">
-          ${existing ? 'Replace' : 'Upload'}
-          <input type="file" style="display:none" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-            onchange="window.__uploadPayslip(this,'${p.id}',${m})">
-        </label>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-window.__uploadPayslip = async (input, placementId, month) => {
-  const file = input.files?.[0];
-  if (!file) return;
-  const p = allPlacements.find(x => x.id === placementId);
-  if (!p) return;
-  const student = allStudents.find(s => s.id === p.student_id);
-  const batchCode = p.batch_code || 'NoBatch';
-  const ext = file.name.slice(file.name.lastIndexOf('.'));
-  const fileName = student?.ma_foi_id
-    ? `${student.ma_foi_id}_${batchCode}_Payslip(M${month})_${p.student_name}_${p.company}${ext}`
-    : `${batchCode}_Payslip(M${month})_${p.student_name}_${p.company}${ext}`;
-  const path = `payslips/${placementId}/M${month}_${fileName}`;
-
-  const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, { upsert: true, contentType: file.type });
-  if (error) { toast.error('Upload failed: ' + error.message); return; }
-  const { data: { publicUrl } } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-  await supabase.from(TABLE_PAYSLIPS).upsert(
-    { placement_id: placementId, month_number: month, file_name: fileName, storage_path: path, public_url: publicUrl },
-    { onConflict: 'placement_id,month_number' }
-  );
-  toast.success(`Month ${month} payslip uploaded`);
-  await refreshPayslips();
-  await refreshPlacementDocCounts();
-  renderPlacements();
-};
-
-// ════════════════════════════════════════════════════════════
-// DOCUMENT MANAGEMENT
-// ════════════════════════════════════════════════════════════
-
-let docFilter = { kind: 'all', project: '', search: '' };
-let docPage = 1;
-const DOC_PAGE_SIZE = 25;
-
-document.querySelectorAll('.tab-btn[data-doc-tab]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn[data-doc-tab]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    docFilter.kind = btn.dataset.docTab;
-    docPage = 1;
-    renderDocuments();
-  });
-});
-document.getElementById('doc-filter-project').addEventListener('change', e => {
-  docFilter.project = e.target.value; docPage = 1; renderDocuments();
-});
-document.getElementById('doc-search').addEventListener('input', e => {
-  docFilter.search = e.target.value.toLowerCase(); docPage = 1; renderDocuments();
+$('btn-save-center').addEventListener('click',async()=>{
+    const id=$('center-id').value;
+    const pcode=$('center-project').value, locId=$('center-location').value;
+    const code=$('center-code').value.trim().toUpperCase(), name=$('center-name').value.trim();
+    let ok=true;
+    ['center-project-err','center-location-err','center-code-err','center-name-err'].forEach(id=>$(id).textContent='');
+    if(!pcode){$('center-project-err').textContent='Required.';ok=false;}
+    if(!locId){$('center-location-err').textContent='Required.';ok=false;}
+    if(!code){$('center-code-err').textContent='Required.';ok=false;}
+    else if(!/^[A-Z0-9\s]{1,20}$/.test(code)){$('center-code-err').textContent='Letters, numbers, spaces only (max 20 chars).';ok=false;}
+    if(!name){$('center-name-err').textContent='Required.';ok=false;}
+    if(!ok) return;
+    const proj=allProjects.find(p=>p.code===pcode);
+    const btn=$('btn-save-center'); btn.disabled=true; btn.textContent='Saving\u2026';
+    try{
+        if(id){
+            const {error}=await supabase.from(TABLE_CENTERS).update({code,name,is_active:true}).eq('id',id);
+            if(error) throw error;
+            toast.success('Center updated');
+        } else {
+            const {error}=await supabase.from(TABLE_CENTERS).insert([{project_id:proj?.id,location_id:locId,code,name,is_active:true}]);
+            if(error) throw error;
+            toast.success('Center '+code+' added');
+        }
+        closeModal('modal-center');
+        await loadCenters(); renderCenters();
+    }catch(e){ toast.error('Save failed: '+(e.message.includes('unique')?'Center code already exists for this location.':e.message)); }
+    finally{ btn.disabled=false; btn.textContent='Save Center'; }
 });
 
-function getFilteredDocuments() {
-  let rows = allDocuments;
-  if (docFilter.kind === 'registration') rows = rows.filter(d => d.kind === 'registration');
-  else if (docFilter.kind === 'placement') rows = rows.filter(d => d.kind === 'placement');
-  else if (docFilter.kind === 'payslip')   rows = rows.filter(d => d.kind === 'payslip');
-  else if (docFilter.kind === 'unverified') rows = rows.filter(d => d.kind === 'registration' && !d.verified);
-
-  if (docFilter.project) rows = rows.filter(d => d.projectCode === docFilter.project);
-  if (docFilter.search) {
-    const q = docFilter.search;
-    rows = rows.filter(d => (d.studentName||'').toLowerCase().includes(q) || (d.fileName||'').toLowerCase().includes(q));
-  }
-  return rows;
-}
-
-function renderDocuments() {
-  const titles = { all: 'All Documents', registration: 'Registration Documents', placement: 'Joining Documents', payslip: 'Payslips', unverified: 'Unverified Documents' };
-  document.getElementById('docs-tbl-title').textContent = titles[docFilter.kind] || 'All Documents';
-
-  const rows = getFilteredDocuments();
-  const total = rows.length;
-  const start = (docPage - 1) * DOC_PAGE_SIZE;
-  const page = rows.slice(start, start + DOC_PAGE_SIZE);
-
-  const tbody = document.getElementById('documents-tbody');
-  if (!page.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="tbl-empty">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      No documents found.</td></tr>`;
-  } else {
-    const kindBadge = { registration: 'badge-blue', placement: 'badge-amber', payslip: 'badge-purple' };
-    tbody.innerHTML = page.map(d => `
-      <tr>
-        <td style="font-weight:500">${esc(d.studentName)}${d.maFoiId ? ` <span style="color:var(--text-muted);font-weight:400;font-size:11px">(${esc(d.maFoiId)})</span>` : ''}</td>
-        <td>${esc(d.docLabel)}</td>
-        <td><span class="badge ${kindBadge[d.kind]||'badge-gray'}">${d.kind}</span></td>
-        <td style="font-size:12px;color:var(--text-secondary);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(d.fileName)}">${esc(d.fileName)}</td>
-        <td style="font-size:12px;color:var(--text-secondary)">${fmtDate(d.uploadedAt)}</td>
-        <td>${d.kind === 'registration' ? (d.verified ? '<span class="badge badge-green">✓ Verified</span>' : '<span class="badge badge-gray">Unverified</span>') : '<span style="color:var(--text-muted);font-size:12px">N/A</span>'}</td>
-        <td style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="tbl-btn" onclick="window.__openDocPreviewByIndex(${start + page.indexOf(d)})">View</button>
-          <a href="${d.publicUrl}" download="${esc(d.fileName)}" class="tbl-btn" target="_blank" rel="noopener">Download</a>
-        </td>
-      </tr>`).join('');
-  }
-
-  const totalPages = Math.ceil(total / DOC_PAGE_SIZE);
-  const pag = document.getElementById('documents-pagination');
-  if (totalPages <= 1) {
-    pag.innerHTML = `<span>Showing ${total} document${total===1?'':'s'}</span>`;
-  } else {
-    let btns = '';
-    for (let i = 1; i <= totalPages; i++) btns += `<button class="page-btn ${i===docPage?'active':''}" onclick="window.__goDocPage(${i})">${i}</button>`;
-    pag.innerHTML = `<span>Showing ${start+1}–${Math.min(start+DOC_PAGE_SIZE,total)} of ${total}</span><div class="page-btns">${btns}</div>`;
-  }
-}
-window.__goDocPage = (n) => { docPage = n; renderDocuments(); };
-
-window.__openDocPreviewByIndex = (globalIndex) => {
-  const rows = getFilteredDocuments();
-  const d = rows[globalIndex];
-  if (!d) return;
-  openDocPreview({
-    id: d.id, kind: d.kind, studentName: d.studentName, docLabel: d.docLabel,
-    fileName: d.fileName, publicUrl: d.publicUrl, verified: d.verified, sourceTable: d.sourceTable,
-  });
+window.editCenter=async(id)=>{
+    const c=allCenters.find(x=>x.id===id); if(!c) return;
+    $('center-id').value=id; $('center-modal-title').textContent='Edit Center';
+    $('center-project').value=c.project_code||'';
+    $('center-project').dispatchEvent(new Event('change'));
+    setTimeout(()=>{ $('center-location').value=c.location_id||''; },100);
+    $('center-code').value=c.code||''; $('center-name').value=c.name||'';
+    openModal('modal-center');
+};
+window.deleteCenter=async(id,code)=>{
+    const usedInBatches=allBatches.filter(b=>b.center_id===id).length;
+    if(usedInBatches>0){toast.error(`Cannot delete — ${usedInBatches} batch(es) use this center.`);return;}
+    showConfirm('Delete Center',`Delete center <strong>${esc(code)}</strong>?`,async()=>{
+        try{
+            const {error}=await supabase.from(TABLE_CENTERS).delete().eq('id',id);
+            if(error) throw error;
+            toast.success('Center deleted');
+            await loadCenters(); renderCenters();
+        }catch(e){ toast.error('Delete failed: '+e.message); }
+    });
 };
 
-// ── Document Preview / Verify / Delete ──────────────────────────
-window.openDocPreview = (doc) => {
-  const isImage = /\.(jpg|jpeg|png)$/i.test(doc.fileName);
-  document.getElementById('doc-preview-body').innerHTML = `
-    <div class="profile-row"><div class="profile-row__label">Student</div><div class="profile-row__val">${esc(doc.studentName)}</div></div>
-    <div class="profile-row"><div class="profile-row__label">Document</div><div class="profile-row__val">${esc(doc.docLabel)}</div></div>
-    <div class="profile-row"><div class="profile-row__label">File Name</div><div class="profile-row__val" style="word-break:break-all">${esc(doc.fileName)}</div></div>
-    ${isImage ? `<div style="margin-top:14px;border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden"><img src="${doc.publicUrl}" style="width:100%;display:block" alt="${esc(doc.fileName)}"></div>` : `<div style="margin-top:14px;padding:24px;text-align:center;background:var(--bg);border-radius:var(--r-md);color:var(--text-muted);font-size:13px">PDF preview not shown inline — use View or Download.</div>`}
-  `;
+// ══════════════════════════════════════════════════════════
+// PLACEMENTS
+// ══════════════════════════════════════════════════════════
+let plFilter='all';
+document.querySelectorAll('.tab-btn[data-pl-tab]').forEach(b=>{
+    b.addEventListener('click',()=>{
+        document.querySelectorAll('.tab-btn[data-pl-tab]').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active'); plFilter=b.dataset.plTab; renderPlacements();
+    });
+});
 
-  const footEl = document.getElementById('doc-preview-foot');
-  let footHtml = `<a href="${doc.publicUrl}" target="_blank" rel="noopener" class="btn btn-ghost">Open in New Tab</a>`;
-  if (doc.kind === 'registration') {
-    footHtml += doc.verified
-      ? `<button class="btn btn-ghost" id="btn-unverify-doc">Mark Unverified</button>`
-      : `<button class="btn btn-primary" id="btn-verify-doc">Mark Verified</button>`;
-  }
-  footHtml += `<button class="btn" id="btn-delete-doc" style="background:var(--danger);color:white;border-color:var(--danger)">Delete</button>`;
-  footEl.innerHTML = footHtml;
+function populatePlacementStudentDropdown(){
+    const placed=allStudents.filter(s=>s.placement_status==='placed'||true); // allow admin to add any
+    $('pl-student').innerHTML='<option value="">Select student\u2026</option>'+
+        allStudents.map(s=>`<option value="${s.id}">${esc(s.full_name)} (${s.ma_foi_id||s.phone}) &mdash; ${esc(s.project_name)}</option>`).join('');
+}
 
-  document.getElementById('btn-verify-doc')?.addEventListener('click', () => toggleDocVerified(doc.id, true));
-  document.getElementById('btn-unverify-doc')?.addEventListener('click', () => toggleDocVerified(doc.id, false));
-  document.getElementById('btn-delete-doc')?.addEventListener('click', () => confirmDeleteDocument(doc));
+function renderPlacements(){
+    let rows=allPlacements;
+    if(plFilter==='active') rows=rows.filter(p=>p.placement_status==='active');
+    else if(plFilter==='resigned') rows=rows.filter(p=>['resigned','terminated','absconded'].includes(p.placement_status));
+    const tbody=$('placements-tbody');
+    if(!rows.length){tbody.innerHTML=`<tr><td colspan="10" class="tbl-empty">No placements yet.</td></tr>`;return;}
+    const stBadge={active:'badge-green',resigned:'badge-amber',terminated:'badge-red',absconded:'badge-red'};
+    tbody.innerHTML=rows.map(p=>`<tr>
+      <td style="font-weight:500">${esc(p.student_name)}</td>
+      <td><span class="badge badge-${p.project_code==='nasscom'?'nasscom':'bajaj'}">${esc(p.project_code)}</span></td>
+      <td style="font-weight:500">${esc(p.company)}</td>
+      <td>${esc(p.designation||'\u2014')}</td>
+      <td>${p.salary?'\u20B9'+Number(p.salary).toLocaleString('en-IN'):'\u2014'}</td>
+      <td style="font-size:12px">${fmtDate(p.date_of_joining)}</td>
+      <td><span class="badge ${stBadge[p.placement_status]||'badge-gray'}">${esc(p.placement_status)}</span></td>
+      <td><span class="badge badge-gray">${jdocCounts[p.id]||0}/3</span></td>
+      <td><span class="badge badge-gray">${payCounts[p.id]||0}/3</span></td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap">
+        <button class="tbl-btn" onclick="editPlacement('${p.id}')">Edit</button>
+        <button class="tbl-btn tbl-btn--danger" onclick="deletePlacement('${p.id}','${esc(p.student_name)}')">Delete</button>
+      </td>
+    </tr>`).join('');
+}
 
-  openModal('modal-doc-preview');
+$('btn-add-placement').addEventListener('click',()=>{
+    $('pl-id').value=''; $('pl-modal-title').textContent='Add Placement';
+    ['pl-student','pl-company','pl-designation','pl-salary','pl-feedback'].forEach(id=>$(id).value='');
+    $('pl-doj').value=''; $('pl-status').value='active';
+    $('pl-student').disabled=false;
+    ['pl-student-err','pl-company-err'].forEach(id=>$(id).textContent='');
+    openModal('modal-placement');
+});
+
+window.editPlacement=async(id)=>{
+    const p=allPlacements.find(x=>x.id===id); if(!p) return;
+    $('pl-id').value=id; $('pl-modal-title').textContent='Edit Placement';
+    $('pl-student').value=p.student_id||''; $('pl-student').disabled=true;
+    $('pl-company').value=p.company||''; $('pl-designation').value=p.designation||'';
+    $('pl-salary').value=p.salary||''; $('pl-doj').value=p.date_of_joining||'';
+    $('pl-status').value=p.placement_status||'active'; $('pl-feedback').value=p.feedback||'';
+    openModal('modal-placement');
 };
 
-async function toggleDocVerified(docId, verified) {
-  try {
-    const { error } = await supabase.from(TABLE_REGISTRATION_DOCS).update({
-      verified, verified_at: verified ? new Date().toISOString() : null,
-    }).eq('id', docId);
-    if (error) throw error;
-    await logAudit(verified ? 'document_verify' : 'document_unverify', 'document', docId, {});
-    toast.success(verified ? 'Document marked as verified' : 'Document marked as unverified');
-    closeModal('modal-doc-preview');
-    await loadDocuments();
-    renderDocuments();
-  } catch (err) {
-    toast.error('Update failed: ' + err.message);
-  }
+$('btn-save-placement').addEventListener('click',async()=>{
+    const id=$('pl-id').value, studentId=$('pl-student').value, company=$('pl-company').value.trim();
+    let ok=true;
+    $('pl-student-err').textContent=''; $('pl-company-err').textContent='';
+    if(!studentId){$('pl-student-err').textContent='Select a student.';ok=false;}
+    if(!company){$('pl-company-err').textContent='Company name required.';ok=false;}
+    if(!ok) return;
+    const btn=$('btn-save-placement'); btn.disabled=true; btn.textContent='Saving\u2026';
+    try{
+        const s=allStudents.find(x=>x.id===studentId);
+        const payload={
+            student_id:studentId, batch_id:s?.batch_id||null,
+            student_name:s?.full_name||'', phone:s?.phone||'', email:s?.email||'',
+            program_name:s?.program_name||'', location_name:s?.location_name||'',
+            project_code:s?.project_code||'', ma_foi_id:s?.ma_foi_id||null, batch_code:s?.batch_code||null,
+            company, designation:$('pl-designation').value||null, salary:$('pl-salary').value||null,
+            date_of_joining:$('pl-doj').value||null, feedback:$('pl-feedback').value||null,
+            placement_status:$('pl-status').value,
+        };
+        if(id){
+            const {error}=await supabase.from(TABLE_PLACEMENTS).update(payload).eq('id',id);
+            if(error) throw error;
+            toast.success('Placement updated');
+        } else {
+            const {error}=await supabase.from(TABLE_PLACEMENTS).insert([payload]);
+            if(error) throw error;
+            await supabase.from(TABLE_STUDENTS).update({placement_status:'placed',registration_status:'placed'}).eq('id',studentId);
+            await logAudit('placement_create','placement',null,{student:s?.full_name,company});
+            toast.success('Placement added for '+s?.full_name);
+        }
+        closeModal('modal-placement');
+        await loadPlacements(); await loadStudents(); renderPlacements(); renderStudents();
+        loadDashboardStats().then(renderStats);
+    }catch(e){ toast.error('Save failed: '+e.message); }
+    finally{ btn.disabled=false; btn.textContent='Save Placement'; }
+});
+
+window.deletePlacement=(id,name)=>{
+    showConfirm('Delete Placement',`Delete placement for <strong>${esc(name)}</strong>? All related documents and payslips will also be deleted.`,async()=>{
+        try{
+            const {error}=await supabase.from(TABLE_PLACEMENTS).delete().eq('id',id);
+            if(error) throw error;
+            toast.success('Placement deleted');
+            await loadPlacements(); renderPlacements(); loadDashboardStats().then(renderStats);
+        }catch(e){ toast.error('Delete failed: '+e.message); }
+    });
+};
+
+// ══════════════════════════════════════════════════════════
+// DOCUMENTS
+// ══════════════════════════════════════════════════════════
+let docFilter={kind:'all',project:'',search:''}, docPage=1;
+const DOC_PAGE=25;
+
+document.querySelectorAll('.tab-btn[data-doc-tab]').forEach(b=>{
+    b.addEventListener('click',()=>{
+        document.querySelectorAll('.tab-btn[data-doc-tab]').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active'); docFilter.kind=b.dataset.docTab; docPage=1; renderDocuments();
+    });
+});
+$('doc-filter-project').addEventListener('change',e=>{docFilter.project=e.target.value;docPage=1;renderDocuments();});
+$('doc-search').addEventListener('input',e=>{docFilter.search=e.target.value.toLowerCase();docPage=1;renderDocuments();});
+
+function getFilteredDocs(){
+    let rows=allDocuments;
+    if(docFilter.kind==='registration') rows=rows.filter(d=>d.kind==='registration');
+    else if(docFilter.kind==='placement') rows=rows.filter(d=>d.kind==='placement');
+    else if(docFilter.kind==='payslip')   rows=rows.filter(d=>d.kind==='payslip');
+    else if(docFilter.kind==='unverified') rows=rows.filter(d=>d.kind==='registration'&&!d.verified);
+    if(docFilter.project) rows=rows.filter(d=>d.projectCode===docFilter.project);
+    if(docFilter.search){const q=docFilter.search;rows=rows.filter(d=>(d.studentName||'').toLowerCase().includes(q)||(d.fileName||'').toLowerCase().includes(q));}
+    return rows;
 }
 
-function confirmDeleteDocument(doc) {
-  showConfirm(
-    'Delete Document',
-    `Delete <strong>${esc(doc.docLabel)}</strong> for <strong>${esc(doc.studentName)}</strong>? This permanently removes the file from storage.`,
-    async () => {
-      try {
-        const { error } = await supabase.from(doc.sourceTable).delete().eq('id', doc.id);
-        if (error) throw error;
-        await logAudit('document_delete', 'document', doc.id, { fileName: doc.fileName });
-        toast.success('Document deleted');
-        closeModal('modal-doc-preview');
-        await loadDocuments();
-        await loadDashboardStats();
-        renderDocuments();
-      } catch (err) {
-        toast.error('Delete failed: ' + err.message);
-      }
-    }
-  );
+function renderDocuments(){
+    const all=getFilteredDocs(), total=all.length;
+    const start=(docPage-1)*DOC_PAGE, page=all.slice(start,start+DOC_PAGE);
+    const kindLabels={all:'All Documents',registration:'Registration Docs',placement:'Joining Docs',payslip:'Payslips',unverified:'Unverified'};
+    $('docs-tbl-title').textContent=kindLabels[docFilter.kind]||'All Documents';
+    const tbody=$('documents-tbody');
+    if(!page.length){tbody.innerHTML=`<tr><td colspan="7" class="tbl-empty">No documents found.</td></tr>`;$('documents-pagination').innerHTML='';return;}
+    const kindBadge={registration:'badge-blue',placement:'badge-amber',payslip:'badge-purple'};
+    tbody.innerHTML=page.map((d,i)=>`<tr>
+      <td style="font-weight:500">${esc(d.studentName)}${d.maFoiId?` <span style="color:var(--text-muted);font-size:11px">(${esc(d.maFoiId)})</span>`:''}  </td>
+      <td>${esc(d.label)}</td>
+      <td><span class="badge ${kindBadge[d.kind]||'badge-gray'}">${d.kind}</span></td>
+      <td style="font-size:12px;color:var(--text-secondary);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(d.fileName)}">${esc(d.fileName)}</td>
+      <td style="font-size:12px;color:var(--text-secondary)">${fmtDate(d.uploadedAt)}</td>
+      <td>${d.kind==='registration'?`<span class="badge badge-${d.verified?'green':'gray'}">${d.verified?'\u2713 Verified':'Unverified'}</span>`:'<span style="color:var(--text-muted);font-size:12px">N/A</span>'}</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap">
+        <a href="${esc(d.url)}" target="_blank" rel="noopener" class="tbl-btn">View</a>
+        ${d.kind==='registration'
+            ? (d.verified
+                ? `<button class="tbl-btn" onclick="toggleDocVerified('${d.id}',false)">Unverify</button>`
+                : `<button class="tbl-btn tbl-btn--primary" onclick="toggleDocVerified('${d.id}',true)">Verify</button>`)
+            : ''}
+        <button class="tbl-btn tbl-btn--danger" onclick="deleteDoc('${d.id}','${esc(d.sourceTable)}','${esc(d.fileName)}')">Delete</button>
+      </td>
+    </tr>`).join('');
+    const pages=Math.ceil(total/DOC_PAGE);
+    if(pages<=1){$('documents-pagination').innerHTML=`<span>${total} document${total!==1?'s':''}</span>`;return;}
+    let btns='';
+    for(let i=1;i<=pages;i++) btns+=`<button class="page-btn${i===docPage?' active':''}" onclick="window.__dpage(${i})">${i}</button>`;
+    $('documents-pagination').innerHTML=`<span>${start+1}&ndash;${Math.min(start+DOC_PAGE,total)} of ${total}</span><div class="page-btns">${btns}</div>`;
 }
+window.__dpage=n=>{docPage=n;renderDocuments();};
 
+window.toggleDocVerified=async(id,verified)=>{
+    try{
+        const {error}=await supabase.from(TABLE_REGISTRATION_DOCS).update({verified,verified_at:verified?new Date().toISOString():null,verified_by:verified?getUser():null}).eq('id',id);
+        if(error) throw error;
+        toast.success(verified?'Marked as verified':'Marked as unverified');
+        await loadDocuments(); renderDocuments();
+    }catch(e){toast.error('Update failed: '+e.message);}
+};
+window.deleteDoc=async(id,table,name)=>{
+    showConfirm('Delete Document',`Delete <strong>${esc(name)}</strong>? The file record will be removed.`,async()=>{
+        try{
+            const {error}=await supabase.from(table).delete().eq('id',id);
+            if(error) throw error;
+            await logAudit('document_delete','document',id,{fileName:name});
+            toast.success('Document deleted');
+            await loadDocuments(); renderDocuments(); loadDashboardStats().then(renderStats);
+        }catch(e){toast.error('Delete failed: '+e.message);}
+    });
+};
 
-function esc(s) { const d = document.createElement('div'); d.textContent = String(s ?? ''); return d.innerHTML; }
-function fmtDate(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-}
-function maskAadhaar(n) { return (n && n.length === 12) ? 'XXXX XXXX ' + n.slice(8) : (n || '—'); }
-
-// ════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 // BOOT
-// ════════════════════════════════════════════════════════════
-
-if (isAuthenticated()) {
-  showAdmin();
+// ══════════════════════════════════════════════════════════
+if(isAuthed()){
+    showAdmin();
 } else {
-  usernameInput.focus();
+    usernameI.focus();
 }

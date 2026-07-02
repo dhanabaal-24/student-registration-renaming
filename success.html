@@ -332,6 +332,27 @@
       gap: 10px;
     }
 
+    .btn-primary-dl {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 16px;
+      font-size: 13.5px;
+      font-weight: 700;
+      font-family: inherit;
+      border-radius: 10px;
+      border: none;
+      background: var(--primary, #0830a8);
+      color: white;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .btn-primary-dl:hover:not(:disabled) { opacity: 0.88; }
+    .btn-primary-dl:disabled { opacity: 0.6; cursor: not-allowed; }
+
     .btn-sec {
       flex: 1;
       display: flex;
@@ -443,198 +464,144 @@
 <script type="module">
 'use strict';
 
-import { Confetti } from './js/confetti.js';
-import { supabase } from './js/supabase.js';
+import { Confetti }  from './js/confetti.js';
+import { supabase }  from './js/supabase.js';
 import { VIEW_STUDENT_FULL, TABLE_REGISTRATION_DOCS } from './js/config.js';
 
-// ── Read registration data ─────────────────────────────────────
-const params  = new URLSearchParams(window.location.search);
-let maFoiId  = params.get('id')?.trim().toUpperCase() || null;
-let fullName = params.get('name')?.trim() || null;
-let regType  = params.get('type') || 'new';
+const card  = document.getElementById('card');
+const badge = document.getElementById('header-badge');
 
-if (!maFoiId && regType !== 'bajaj' && regType !== 'bajaj-update') {
-  try {
-    const s = JSON.parse(sessionStorage.getItem('mafoi_reg') || 'null');
-    if (s) { maFoiId = s.maFoiId; fullName = s.fullName; regType = s.type || 'new'; }
-  } catch(_) {}
+// Read every param, log everything
+const search   = window.location.search;
+const params   = new URLSearchParams(search);
+const regType  = (params.get('type')  || '').trim();
+const maFoiId  = (params.get('id')    || '').trim().toUpperCase() || null;
+const fullName = (params.get('name')  || '').trim() || null;
+const sid      = (params.get('sid')   || '').trim() || null;
+
+console.log('SUCCESS PAGE PARAMS:');
+console.log('  search string :', search);
+console.log('  type  :', regType);
+console.log('  id    :', maFoiId);
+console.log('  name  :', fullName);
+console.log('  sid   :', sid);
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = String(s ?? '');
+  return d.innerHTML;
 }
 
-// Bajaj registration/update — read from sessionStorage if params incomplete
-if (regType === 'bajaj' || regType === 'bajaj-update' ||
-    params.get('type') === 'bajaj' || params.get('type') === 'bajaj-update') {
-  try {
-    const s = JSON.parse(sessionStorage.getItem('mafoi_reg') || 'null');
-    if (s?.type === 'bajaj' || s?.type === 'bajaj-update') {
-      fullName = fullName || s.fullName;
-      regType  = s.type;
-    }
-  } catch(_) {}
+function triggerCard() {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    card.classList.add('visible');
+  }));
 }
 
-const card = document.getElementById('card');
+function showUpdateSuccess() {
+  const isBajaj = regType === 'bajaj-update';
+  badge.textContent = isBajaj ? 'Bajaj FinServ' : (maFoiId || 'Updated');
+  badge.style.display = '';
 
-// ════════════════════════════════════════════════════
-// ERROR STATE
-// ════════════════════════════════════════════════════
-// ── BAJAJ SUCCESS / UPDATE — no Ma Foi ID shown ──────────────
-if (regType === 'bajaj' || regType === 'bajaj-update') {
-  const isBajajUpdate = regType === 'bajaj-update';
-  const displayName   = fullName || 'Student';
-  const bHeading       = isBajajUpdate ? 'Registration Updated!' : 'Registration Successful!';
-  const bSub           = isBajajUpdate
-    ? `Thank you, <strong>${esc(displayName)}</strong>.<br>Your Bajaj FinServ registration has been updated successfully.`
-    : `Thank you, <strong>${esc(displayName)}</strong>.<br>Your Bajaj FinServ registration has been submitted successfully.<br>Our team will contact you shortly.`;
-
-  document.getElementById('header-badge').textContent = 'Bajaj FinServ';
-  document.getElementById('header-badge').style.display = '';
   card.innerHTML = `
-    <!-- Tick icon -->
     <div class="tick-wrap">
-      <div class="tick-bg" style="background:linear-gradient(135deg,#92400e,#b45309)">
-        <svg class="tick-svg" viewBox="0 0 40 40">
-          <path class="tick-path" d="M8 20 L17 29 L32 13"/>
-        </svg>
-      </div>
-      <div class="tick-ring" style="border-color:rgba(180,83,9,.35)"></div>
-    </div>
-
-    <h1 class="s-title">${bHeading}</h1>
-    <p class="s-sub">
-      ${bSub}
-    </p>
-
-    <div class="s-divider"></div>
-
-    <!-- What happens next -->
-    <div class="next-box">
-      <div class="next-title">What happens next?</div>
-      <div class="next-item">
-        <div class="next-icon" style="background:#b45309">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <span>A Ma Foi representative will contact you within 2–3 working days.</span>
-      </div>
-      <div class="next-item">
-        <div class="next-icon" style="background:#b45309">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <span>Keep your Aadhaar card and documents ready for verification.</span>
-      </div>
-      <div class="next-item">
-        <div class="next-icon" style="background:#b45309">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <span>You will be notified once you are assigned to a batch.</span>
-      </div>
-    </div>
-
-    <!-- Actions -->
-    <div class="action-group">
-      <div class="btn-row-2">
-        <a href="index.html" class="btn-sec">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          Return to Home
-        </a>
-      </div>
-    </div>
-  `;
-  triggerCard();
-  try { sessionStorage.removeItem('mafoi_reg'); } catch(_) {}
-
-// ── ERROR — missing Ma Foi ID for Nasscom ─────────────────────
-} else if (!maFoiId) {
-  card.innerHTML = `
-    <div class="err-state">
-      <div class="err-icon">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-      </div>
-      <div class="err-title">Registration ID Not Found</div>
-      <div class="err-msg">
-        Your registration may still have been saved.<br>
-        Please check your Supabase table or contact Ma Foi support.
-      </div>
-      <a href="index.html" class="btn-sec" style="display:inline-flex;max-width:220px;margin:0 auto">
-        ← Back to Home
-      </a>
-    </div>`;
-  triggerCard();
-  try { sessionStorage.removeItem('mafoi_reg'); } catch(_) {}
-
-// ════════════════════════════════════════════════════
-// NASSCOM SUCCESS STATE — shows Ma Foi ID
-// ════════════════════════════════════════════════════
-} else {
-  const isUpdate = regType === 'update';
-  const heading  = isUpdate ? 'Registration Updated!' : 'Successfully Registered!';
-  const subtext  = isUpdate
-    ? 'Your Ma Foi registration has been updated. All changes are saved.'
-    : 'Welcome to Ma Foi Careers. Your registration is confirmed.';
-
-  // Update header badge
-  const hbadge = document.getElementById('header-badge');
-  hbadge.textContent = maFoiId;
-  hbadge.style.display = '';
-
-  card.innerHTML = `
-    <!-- Tick icon -->
-    <div class="tick-wrap">
-      <div class="tick-bg">
+      <div class="tick-bg" style="background:${isBajaj ? '#b45309' : '#0830a8'}">
         <svg class="tick-svg" viewBox="0 0 40 40">
           <path class="tick-path" d="M8 20 L17 29 L32 13"/>
         </svg>
       </div>
       <div class="tick-ring"></div>
     </div>
-
-    <!-- Heading -->
-    <h1 class="s-title">${heading}</h1>
-    <p class="s-sub">${subtext}</p>
-
+    <h1 class="s-title">Update Successful!</h1>
+    <p class="s-sub">
+      Your registration has been updated,
+      <strong>${esc(fullName || 'Student')}</strong>.
+      ${maFoiId ? '<br><b>Ma Foi ID: ' + esc(maFoiId) + '</b>' : ''}
+    </p>
     <div class="s-divider"></div>
+    <div class="action-group">
+      <button id="btn-dl-pdf" class="btn-download">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download Updated PDF
+      </button>
+      <a href="index.html" class="btn-sec">&#8592; Return to Home</a>
+    </div>`;
 
-    <!-- ID badge -->
+  triggerCard();
+
+  document.getElementById('btn-dl-pdf').addEventListener('click', async function() {
+    this.textContent = 'Generating…';
+    this.disabled = true;
+    try {
+      let student = null, docs = [];
+      if (sid) {
+        const { data } = await supabase.from(VIEW_STUDENT_FULL).select('*').eq('id', sid).single();
+        student = data;
+      } else if (maFoiId) {
+        const { data } = await supabase.from(VIEW_STUDENT_FULL).select('*').eq('ma_foi_id', maFoiId).single();
+        student = data;
+      }
+      if (student?.id) {
+        const { data: d } = await supabase.from(TABLE_REGISTRATION_DOCS).select('*').eq('student_id', student.id);
+        docs = d || [];
+      }
+      generatePDF(maFoiId, fullName, student, docs);
+    } catch(e) { console.error(e); }
+    this.textContent = 'Download Updated PDF';
+    this.disabled = false;
+  });
+}
+
+function showBajajSuccess() {
+  badge.textContent = 'Bajaj FinServ';
+  badge.style.display = '';
+  card.innerHTML = `
+    <div class="tick-wrap">
+      <div class="tick-bg" style="background:#b45309">
+        <svg class="tick-svg" viewBox="0 0 40 40">
+          <path class="tick-path" d="M8 20 L17 29 L32 13"/>
+        </svg>
+      </div>
+      <div class="tick-ring"></div>
+    </div>
+    <h1 class="s-title">Registration Successful!</h1>
+    <p class="s-sub">Thank you, <strong>${esc(fullName || 'Student')}</strong>.<br>
+    Your Bajaj FinServ registration has been submitted. Our team will contact you shortly.</p>
+    <div class="s-divider"></div>
+    <div class="action-group">
+      <a href="index.html" class="btn-sec">&#8592; Return to Home</a>
+    </div>`;
+  triggerCard();
+}
+
+function showNasscomSuccess() {
+  badge.textContent = maFoiId;
+  badge.style.display = '';
+  card.innerHTML = `
+    <div class="tick-wrap">
+      <div class="tick-bg" style="background:#0830a8">
+        <svg class="tick-svg" viewBox="0 0 40 40">
+          <path class="tick-path" d="M8 20 L17 29 L32 13"/>
+        </svg>
+      </div>
+      <div class="tick-ring"></div>
+    </div>
+    <h1 class="s-title">Successfully Registered!</h1>
+    <p class="s-sub">Welcome to Ma Foi Careers. Your registration is confirmed.</p>
+    <div class="s-divider"></div>
     <div class="id-section">
       <p class="id-label">Your Ma Foi ID</p>
-      <button class="id-badge" id="id-badge" type="button" aria-label="Copy Ma Foi ID ${maFoiId}">
-        <span id="id-text">${maFoiId}</span>
-        <span class="copy-chip">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-          Copy
-        </span>
-        <span class="copy-tooltip" id="copy-tooltip">✓ Copied!</span>
-      </button>
-      <p class="id-hint">Tap to copy · Keep this ID to edit your registration later</p>
+      <div class="id-badge">
+        <span id="id-text">${esc(maFoiId)}</span>
+      </div>
+      <p class="id-hint">Save this ID — you need it to edit your registration.</p>
     </div>
-
-    <!-- What's next -->
-    <div class="next-box">
-      <div class="next-title">What happens next?</div>
-      <div class="next-item">
-        <div class="next-icon">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <span>A Ma Foi representative will contact you within 2–3 working days.</span>
-      </div>
-      <div class="next-item">
-        <div class="next-icon">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <span>Save your Ma Foi ID <strong>${maFoiId}</strong> for all future correspondence.</span>
-      </div>
-      <div class="next-item">
-        <div class="next-icon">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <span>You can edit your registration anytime using your ID and registered phone number.</span>
-      </div>
-    </div>
-
-    <!-- Actions -->
     <div class="action-group">
-      <button class="btn-download" id="btn-pdf" type="button">
+      <button id="btn-dl-pdf" class="btn-download">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
           <polyline points="7 10 12 15 17 10"/>
@@ -642,201 +609,144 @@ if (regType === 'bajaj' || regType === 'bajaj-update') {
         </svg>
         Download Registration PDF
       </button>
-      <div class="btn-row-2">
-        <a href="edit.html" class="btn-sec">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          Edit Registration
-        </a>
-        <a href="index.html" class="btn-sec">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          Return to Home
-        </a>
-      </div>
-    </div>
-  `;
+      <a href="index.html" class="btn-sec">&#8592; Return to Home</a>
+    </div>`;
+  triggerCard();
 
-  // ── Copy ID ─────────────────────────────────────────────────
-  const badge   = document.getElementById('id-badge');
-  const tooltip = document.getElementById('copy-tooltip');
-
-  async function copyId() {
-    try { await navigator.clipboard.writeText(maFoiId); }
-    catch {
-      const t = Object.assign(document.createElement('textarea'), { value: maFoiId });
-      t.style.cssText = 'position:fixed;opacity:0';
-      document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove();
-    }
-    tooltip.classList.add('show');
-    setTimeout(() => tooltip.classList.remove('show'), 2000);
-  }
-
-  badge.addEventListener('click', copyId);
-  badge.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); copyId(); }});
-
-  // ── Download PDF ─────────────────────────────────────────────
-  document.getElementById('btn-pdf').addEventListener('click', async () => {
-    const btn = document.getElementById('btn-pdf');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spin"></span> Generating PDF…';
+  document.getElementById('btn-dl-pdf').addEventListener('click', async function() {
+    this.textContent = 'Generating…';
+    this.disabled = true;
     try {
-      let student = null, documents = [];
-      try {
-        const { data: s, error: sErr } = await supabase
-          .from(VIEW_STUDENT_FULL)
-          .select('*')
-          .eq('ma_foi_id', maFoiId)
-          .single();
-        if (sErr) console.error('[PDF] Could not load student:', sErr);
-        student = s;
-
-        if (student?.id) {
-          const { data: d, error: dErr } = await supabase
-            .from(TABLE_REGISTRATION_DOCS)
-            .select('*')
-            .eq('student_id', student.id);
-          if (dErr) console.error('[PDF] Could not load documents:', dErr);
-          documents = d || [];
-        }
-      } catch(e) { console.error('[PDF] Data fetch failed:', e); }
-      generatePDF(maFoiId, fullName, student, documents);
-    } catch(e) {
-      console.error(e);
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download Registration PDF`;
-    }
+      const { data: student } = await supabase.from(VIEW_STUDENT_FULL).select('*').eq('ma_foi_id', maFoiId).single();
+      let docs = [];
+      if (student?.id) {
+        const { data: d } = await supabase.from(TABLE_REGISTRATION_DOCS).select('*').eq('student_id', student.id);
+        docs = d || [];
+      }
+      generatePDF(maFoiId, fullName, student, docs);
+    } catch(e) { console.error(e); }
+    this.textContent = 'Download Registration PDF';
+    this.disabled = false;
   });
 
-  // ── Confetti (only on new registration) ──────────────────────
-  if (!isUpdate) {
-    try {
-      const confetti = new Confetti(document.getElementById('confetti-canvas'));
-      confetti.launch();
-      setTimeout(() => confetti.destroy(), 5000);
-    } catch(e) { console.warn('Confetti:', e); }
-  }
-
-  try { sessionStorage.removeItem('mafoi_reg'); } catch(_) {}
+  // Confetti
+  try {
+    const confetti = new Confetti(document.getElementById('confetti-canvas'));
+    confetti.launch();
+    setTimeout(() => confetti.destroy(), 5000);
+  } catch(e) {}
 }
 
-// ── Trigger card entrance animation ───────────────────────────
-function triggerCard() {
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    document.getElementById('card').classList.add('visible');
-  }));
+function showError() {
+  card.innerHTML = `
+    <div class="err-state">
+      <div class="err-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <div class="err-title">Something went wrong</div>
+      <div class="err-msg">
+        Could not load registration details.<br>
+        DEBUG: type="${esc(regType)}" id="${esc(maFoiId||'')}" sid="${esc(sid||'')}"<br>
+        URL: ${esc(search)}
+      </div>
+      <a href="index.html" class="btn-sec" style="display:inline-flex;max-width:240px;margin:16px auto 0">
+        &#8592; Back to Home
+      </a>
+    </div>`;
+  triggerCard();
 }
 
-triggerCard();
+// ── ROUTE ─────────────────────────────────────────────────────
+if (regType === 'update' || regType === 'bajaj-update') {
+  showUpdateSuccess();
+} else if (regType === 'bajaj') {
+  showBajajSuccess();
+} else if (regType === 'new' && maFoiId) {
+  showNasscomSuccess();
+} else if (maFoiId) {
+  // Any other type with a Ma Foi ID — show Nasscom success
+  showNasscomSuccess();
+} else {
+  // Show error with debug info visible on screen
+  showError();
+}
 
-// ════════════════════════════════════════════════════
-// PDF GENERATOR
-// ════════════════════════════════════════════════════
+// ── PDF GENERATOR ─────────────────────────────────────────────
 function generatePDF(maFoiId, fullName, student, documents) {
-  const today = new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'long', year:'numeric' });
-  const fmt   = iso => { if(!iso) return '—'; const d=new Date(iso); return isNaN(d)?iso:d.toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'}); };
-  const mask  = n => (n && n.length===12) ? 'XXXX XXXX '+n.slice(8) : (n||'—');
-  const row   = (k,v) => v!=null&&v!=='' ? `<tr><td class="lbl">${k}</td><td class="val">${esc(String(v))}</td></tr>` : '';
-  const fAadh = student?.father_aadhaar_masked?.replace(':','XXX XXX') || null;
+  const today = new Date().toLocaleDateString('en-IN', {day:'2-digit',month:'long',year:'numeric'});
+  const fmt = iso => { if(!iso) return '—'; const d=new Date(iso); return isNaN(d)?iso:d.toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'}); };
+  const mask = n => (n&&n.length===12)?'XXXX XXXX '+n.slice(8):(n||'—');
+  const row = (k,v) => v!=null&&v!==''? `<tr><td class="lbl">${k}</td><td class="val">${esc(String(v))}</td></tr>` : '';
+  const isBajaj = !maFoiId || student?.project_code === 'bajaj';
 
   const DOC_TYPES = [
     {key:'10th_marksheet',label:'10th Marksheet'},
     {key:'12th_marksheet',label:'12th Marksheet'},
-    {key:'degree_certificate',label:'6th Sem Marksheet / Degree Certificate'},
+    {key:'degree_certificate',label:'Degree Certificate'},
     {key:'aadhaar_card',label:'Aadhaar Card'},
     {key:'ews_certificate',label:'EWS Certificate'},
     {key:'signature',label:'Signature'},
-    {key:'passport_photo',label:'Passport Size Photo'},
+    {key:'passport_photo',label:'Passport Photo'},
   ];
 
   const docRows = DOC_TYPES.map(dt => {
-    const found = documents.find(d => d.doc_type === dt.key);
-    return `<tr><td class="lbl">${dt.label}</td><td class="val ${found?'ok':'miss'}">${found?'✓ Uploaded':'— Not uploaded'}</td></tr>`;
+    const f = documents.find(d => d.doc_type === dt.key);
+    return `<tr><td class="lbl">${dt.label}</td><td class="val ${f?'ok':'miss'}">${f?'✓ Uploaded':'— Not uploaded'}</td></tr>`;
   }).join('');
 
-  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
-<title>Ma Foi Registration — ${esc(maFoiId)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Ma Foi Registration</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter',Arial,sans-serif;font-size:13px;color:#111827;background:#fff;padding:32px 36px;max-width:780px;margin:0 auto}
-.hdr{display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;border-bottom:3px solid #1e3a5f;margin-bottom:22px}
-.logo{font-size:20px;font-weight:800;color:#1e3a5f;letter-spacing:-.5px}.logo span{color:#2563eb}
-.meta{text-align:right;font-size:11.5px;color:#6b7280;line-height:1.6}.meta strong{display:block;font-size:13px;color:#111827;font-weight:700}
-.doc-title{text-align:center;font-size:16px;font-weight:800;color:#1e3a5f;letter-spacing:.02em;margin-bottom:18px}
-.id-block{background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff;border-radius:10px;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
-.id-lbl{font-size:10px;font-weight:600;opacity:.8;text-transform:uppercase;letter-spacing:.1em}
-.id-val{font-size:26px;font-weight:900;letter-spacing:.1em;margin-top:2px}
-.id-right{text-align:right;font-size:12px;opacity:.85;line-height:1.6}
-.section{margin-bottom:18px;page-break-inside:avoid}
-.sec-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#1e3a5f;background:#eff6ff;padding:5px 10px;border-left:3px solid #2563eb;border-radius:0 4px 4px 0;margin-bottom:7px}
-table{width:100%;border-collapse:collapse;font-size:12.5px}
-.lbl{width:42%;padding:7px 10px;color:#6b7280;font-weight:600;background:#f9fafb;border-bottom:1px solid #f3f4f6}
-.val{padding:7px 10px;color:#111827;border-bottom:1px solid #f3f4f6}
-.ok{color:#16a34a;font-weight:700}.miss{color:#9ca3af}
-.sigs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;margin-top:36px;page-break-inside:avoid}
-.sig{border-top:1px solid #374151;padding-top:6px;font-size:11px;color:#6b7280}
-.footer{margin-top:24px;padding-top:12px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;font-size:10.5px;color:#9ca3af}
-.no-print{text-align:right;margin-bottom:18px}
-@media print{.no-print{display:none!important}}
+body{font-family:Inter,sans-serif;color:#1e293b;background:#fff;padding:32px 40px;font-size:13px;line-height:1.5}
+.header{display:flex;justify-content:space-between;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #0830a8}
+.org{font-size:18px;font-weight:800;color:#0830a8}.org-sub{font-size:11px;color:#64748b;margin-top:2px}
+.meta{font-size:11px;color:#64748b;text-align:right;line-height:1.8}
+.id-box{background:linear-gradient(135deg,#0830a8,#2563eb);color:white;border-radius:12px;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.id-left{font-size:11px;font-weight:600;opacity:.8;text-transform:uppercase;letter-spacing:.06em}
+.id-num{font-size:24px;font-weight:900;letter-spacing:.1em}
+.id-right{text-align:right;font-size:11px;opacity:.85;line-height:1.7}
+section{margin-bottom:18px}
+h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0}
+table{width:100%;border-collapse:collapse}
+tr:nth-child(even) td{background:#f8fafc}
+td{padding:6px 10px;font-size:12.5px;vertical-align:top}
+.lbl{width:44%;font-weight:600;color:#475569}.val{color:#1e293b}
+.ok{color:#15803d;font-weight:600}.miss{color:#b91c1c}
+.footer{margin-top:24px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:10.5px;color:#94a3b8;text-align:center}
 </style></head><body>
-<div class="no-print">
-  <button onclick="window.print()" style="background:#1e3a5f;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">🖨️ Save as PDF / Print</button>
+<div class="header">
+  <div><div class="org">Ma Foi Careers</div><div class="org-sub">Student Registration Acknowledgement</div></div>
+  <div class="meta">Date: ${today}<br>Program: ${esc(student?.program_name||'—')} · ${esc(student?.location_name||'—')}</div>
 </div>
-<div class="hdr">
-  <div class="logo">Ma Foi<span>.</span>Careers</div>
-  <div class="meta"><strong>Registration Acknowledgement</strong>Date: ${today}<br>Program: ${esc(student?.program_name||'—')} · ${esc(student?.location_name||'—')}</div>
-</div>
-<div class="doc-title">REGISTRATION ACKNOWLEDGEMENT CERTIFICATE</div>
-<div class="id-block">
-  <div><div class="id-lbl">Ma Foi ID</div><div class="id-val">${esc(maFoiId)}</div></div>
-  <div class="id-right">Batch: ${esc(student?.batch_code||'Not assigned')}<br>${esc(student?.program_name||'')} Program<br>${esc(student?.location_name||'')} Centre</div>
-</div>
-<div class="section"><div class="sec-title">Personal Information</div><table>
-  ${row('Full Name', fullName||(student?`${student.first_name} ${student.last_name}`:null))}
-  ${row('Email Address', student?.email)}${row('Phone Number', student?.phone)}
-  ${row('Gender', student?.gender)}${row('Date of Birth', fmt(student?.date_of_birth))}
-  ${row('Aadhaar Number', mask(student?.aadhaar_number))}${row('Address', student?.address)}
-  ${row('Educational Qualification', student?.educational_qualification)}${row('Graduation Year', student?.graduation_year)}
-</table></div>
-<div class="section"><div class="sec-title">Program Enrollment</div><table>
-  ${row('Project', student?.project_name)}${row('Program', student?.program_name)}${row('Centre Location', student?.location_name)}${row('Batch', student?.batch_code || 'Not yet assigned')}
-</table></div>
-<div class="section"><div class="sec-title">Family Background</div><table>
-  ${row("Father's Name", student?.father_name)}${row("Mother's Name", student?.mother_name)}
-  ${row("Father's Occupation", student?.father_occupation)}${row('Parent Contact', student?.parent_contact)}
-  ${row('Total Family Members', student?.total_family_members)}${row('Annual Family Income', student?.annual_family_income)}
-  ${fAadh?row("Father's Aadhaar (Partial)",fAadh):''}
-</table></div>
-<div class="section"><div class="sec-title">Uploaded Documents</div><table>
-  <tr><td class="lbl" style="font-weight:700;color:#374151">Document</td><td class="val" style="font-weight:700;color:#374151">Status</td></tr>
-  ${docRows}
-</table></div>
-<div class="sigs">
-  <div><div class="sig">Student Signature</div></div>
-  <div><div class="sig">Centre Coordinator</div></div>
-  <div><div class="sig">Authorized Signatory</div></div>
-</div>
-<div class="footer">
-  <span>Ma Foi Management Consultants Ltd. / CIEL HR Services</span>
-  <span>System generated · ${esc(maFoiId)} · ${new Date().toISOString().split('T')[0]}</span>
-</div>
-<script>window.addEventListener('load',()=>setTimeout(()=>window.print(),600));<\/script>
+${maFoiId ? `<div class="id-box"><div><div class="id-left">Ma Foi ID</div><div class="id-num">${esc(maFoiId)}</div></div><div class="id-right">Batch: ${esc(student?.batch_code||'Not assigned')}<br>${esc(student?.program_name||'')} · ${esc(student?.location_name||'')}</div></div>` : `<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#92400e"><b>Bajaj FinServ</b> — ${esc(student?.program_name||'')} · ${esc(student?.location_name||'')}</div>`}
+<section><h2>Personal Information</h2><table>
+${row('Full Name',student?.full_name||fullName)}${row('Email',student?.email)}${row('Phone',student?.phone)}
+${row('Gender',student?.gender)}${row('Date of Birth',fmt(student?.date_of_birth))}
+${row('Aadhaar',mask(student?.aadhaar_number))}${row('Address',student?.address)}
+${!isBajaj?row('Qualification',student?.educational_qualification):''}
+${!isBajaj?row('Graduation Year',student?.graduation_year):''}
+</table></section>
+<section><h2>Program Details</h2><table>
+${row('Project',student?.project_name)}${row('Program',student?.program_name)}
+${row('Location',student?.location_name)}${row('Batch',student?.batch_code||'Not assigned')}
+</table></section>
+<section><h2>Family Background</h2><table>
+${row("Father's Name",student?.father_name)}${row("Mother's Name",student?.mother_name)}
+${row("Father's Occupation",student?.father_occupation)}${row('Parent Contact',student?.parent_contact)}
+${row('Family Members',student?.total_family_members)}${row('Annual Income',student?.annual_family_income)}
+</table></section>
+${!isBajaj?`<section><h2>Documents</h2><table>${docRows}</table></section>`:''}
+<div class="footer">Computer-generated acknowledgement · Ma Foi Careers · CIEL HR Services · ${today}</div>
 </body></html>`;
 
-  const win = window.open('', '_blank', 'width=820,height=1000,scrollbars=yes');
-  if (!win) {
-    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    Object.assign(document.createElement('a'), {href:url, download:`MaFoi_Registration_${maFoiId}.html`}).click();
-    URL.revokeObjectURL(url);
-    return;
-  }
-  win.document.open(); win.document.write(html); win.document.close();
-}
-
-function esc(s) {
-  if (!s) return '';
-  const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML;
+  const win = window.open('', '_blank');
+  if (win) { win.document.write(html); win.document.close(); setTimeout(()=>{try{win.print();}catch(_){}},800); }
 }
 </script>
 </body>

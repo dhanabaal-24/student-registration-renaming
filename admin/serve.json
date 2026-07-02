@@ -5,10 +5,10 @@
     { "source": "/admin", "destination": "/admin/", "type": 308 }
   ],
   "rewrites": [
-    { "source": "/admin/",  "destination": "/admin/index.html" },
-    { "source": "/edit",    "destination": "/edit.html" },
-    { "source": "/bajaj",   "destination": "/bajaj.html" },
-    { "source": "/success", "destination": "/success.html" }
+    { "source": "/admin/",    "destination": "/admin/index.html" },
+    { "source": "/edit",      "destination": "/edit.html" },
+    { "source": "/bajaj",     "destination": "/bajaj.html" },
+    { "source": "/placement", "destination": "/placement.html" }
   ],
   "directoryListing": false,
   "trailingSlash": false

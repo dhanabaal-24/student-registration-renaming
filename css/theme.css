@@ -248,6 +248,106 @@ button, input, select, textarea { font-family: var(--font); }
   gap: 5px;
 }
 
+/* ── V5 Landing wrapper (index.html uses .landing > .landing__inner) ── */
+.landing {
+  min-height: calc(100vh - 60px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-8) var(--sp-4);
+}
+.landing__inner {
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.landing__hero {
+  margin-bottom: var(--sp-8);
+}
+.landing__hero-icon {
+  width: 64px; height: 64px;
+  background: var(--primary);
+  border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto var(--sp-5);
+  box-shadow: 0 8px 24px rgba(8,48,168,.3);
+}
+.landing__title {
+  font-size: clamp(24px,5vw,36px);
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -.5px;
+  margin-bottom: var(--sp-3);
+  line-height: 1.2;
+}
+.landing__subtitle {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.landing__admin-link {
+  margin-top: var(--sp-6);
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 600; color: var(--text-muted);
+  text-decoration: none; padding: 6px 14px;
+  border: 1px solid var(--border); border-radius: var(--r-full);
+  transition: all .15s;
+}
+.landing__admin-link:hover { color: var(--text); border-color: var(--border-strong); }
+
+/* ── Form page additions ─────────────────────────────────────── */
+.form-page__body {
+  padding: var(--sp-6) var(--sp-4) var(--sp-10);
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+}
+.form-page__project {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600; color: var(--text-secondary);
+}
+.form-page__project-icon {
+  width: 24px; height: 24px;
+  background: var(--primary);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── 3-column form grid ──────────────────────────────────────── */
+.form-grid--3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--sp-4);
+}
+@media (max-width: 560px) { .form-grid--3 { grid-template-columns: 1fr; } }
+
+/* ── Button spinner ──────────────────────────────────────────── */
+.btn__spinner,
+.btn-spinner {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,.4);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Form form-card subtitle ────────────────────────────────── */
+.form-card__subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 3px;
+  line-height: 1.5;
+}
+
 /* ── Form page layout ────────────────────────────────────────── */
 .form-page { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 
